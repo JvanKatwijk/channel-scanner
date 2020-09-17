@@ -4,14 +4,27 @@ dab-channelScanner
 -------------------------------------------------------------------------
 
 channelScanner is derived from the dab-cmdline scanner program.
-It supports
+The channel-scanner is used to scan some channels, channels specified in
+the command line. The output is (can be) twofold:
+
+   a. a description of the content of the DAB data found in the scannel;
+
+   b. a dump of a specified number of seconds of the raw input data.
+
+![channel-scanner](/channel-scanner.png?raw=true)
+
+For a continuous scan over the (selected) channels in a given band,
+one is advised to use the dab-scanner.
+
+channel-scanner supports
 	a. the RTLSDR devices
 	b. PLUTO devices
-	c. SDRplay devices
+	c. SDRplay devices (2.13 libraries)
 
 Note that it contains a number of sources for handling the back end
 that are not used at all, but were part of the sourcetree used
 for setting up the program
+
 
 ---------------------------------------------------------------------------
 Building an executable
@@ -26,6 +39,8 @@ cmake .. -DXXX=ON
 make
 
 where XXX is ONE of RTLSDR, SDRPLAY, PLUTO
+
+So, one generates an executable for a single device
 
 The basic parameters are
 
