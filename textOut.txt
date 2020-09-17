@@ -1,0 +1,86 @@
+
+
+ DAB+            ; ensembleId 8008; channel 11C; frequency 220.352005; time of recording 2020-09-17 09:39:49; SNRr 3; mainId 21; subId 17
+
+
+Audio services
+program name;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; genre; prot level; code rate; language
+
+GrootNieuwsRadio;8961;15;708;48;64;DAB+;Religion;EEP 3-A;1/2;unknown;
+Qmusic          ;83C8;10;426;60;80;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+BNR Nieuwsradio ;83D1;9;378;48;64;DAB+;News;EEP 3-A;1/2;unknown;
+SLAM!           ;82A5;11;486;72;96;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+538             ;83C7;1;0;60;80;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Sky Radio       ;83C6;5;186;60;80;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Veronica        ;83E1;7;318;60;80;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Radio Maria     ;8816;3;108;42;56;DAB+;Culture;EEP 3-A;1/2;unknown;
+538TOP50        ;8802;2;60;48;64;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+100% NL         ;83D3;6;246;72;96;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Qmusic non-stop ;8804;4;150;36;48;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Radio 10 60s&70s;8818;12;558;48;64;DAB+;Oldies Music;EEP 3-A;1/2;unknown;
+Radio 10        ;83D2;17;804;60;80;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+Sublime         ;82A8;13;606;60;80;DAB+;Jazz Music;EEP 3-A;1/2;unknown;
+Sky Radio Hits  ;8808;16;756;48;64;DAB+;Pop Music;EEP 3-A;1/2;unknown;
+KINK            ;8358;14;666;42;56;DAB+;Rock Music;EEP 3-A;1/2;unknown;
+
+
+Ensemble RANDSTAD-ZW     ; ensembleId 2712; channel 8B; frequency 197.647995; time of recording 2020-09-17 09:40:05; SNR 2; 
+
+
+Audio services
+program name;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; genre; prot level; code rate; language
+
+Radio President ;8DFB;2;72;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+Feel Good Radio ;8DFC;3;144;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+Beat FM 60-70-80;8DFD;4;216;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+Lansingerland FM;8DFE;5;288;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+XXL Radio       ;8DFF;6;360;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+SunriseFM       ;8E01;7;432;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+R Krimpenerwaard;5E07;8;504;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+Dichtbij Jou    ;9F11;9;576;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+Hofstad Radio   ;8E02;10;648;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+PodRadio        ;6D80;11;720;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+RadioTest       ;8EFF;12;792;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+ZFM Zoetermeer  ;8DFA;1;0;72;72;DAB+;Pop Music;EEP 2-A;3/8;unknown;
+
+
+ 8A Randstad NL  ; ensembleId 8018; channel 8A; frequency 195.936005; time of recording 2020-09-17 09:40:21; SNRr 4; mainId 8; subId 4
+
+
+Audio services
+program name;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; genre; prot level; code rate; language
+
+Omroep Flevoland;8417;2;36;72;96;DAB+;Current Affairs;EEP 3-A;1/2;unknown;
+Radio M Utrecht ;8416;13;540;72;96;DAB+;Current Affairs;EEP 3-A;1/2;unknown;
+Radio Gelderland;8415;7;360;72;96;DAB+;Varied;EEP 3-A;1/2;unknown;
+Radio Rijnmond  ;841A;4;180;72;96;DAB+;Current Affairs;EEP 3-A;1/2;unknown;
+Ujala Radio     ;82FF;14;612;36;64;DAB+;Culture;EEP 3-B;4/6;unknown;
+NH Radio        ;8418;5;252;72;96;DAB+;Information;EEP 3-A;1/2;unknown;
+Omroep West     ;8419;3;108;72;96;DAB+;Varied;EEP 3-A;1/2;unknown;
+WILD FM Hitradio;86EF;6;324;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+Amor FM         ;845A;1;0;36;64;DAB+;No programme type;EEP 3-B;4/6;unknown;
+VAHON RADIO!    ;8985;15;648;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+RADIONL NoordHol;8421;9;468;36;64;DAB+;No programme type;EEP 3-B;4/6;unknown;
+RADIONL Zuid Hol;8621;10;504;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+RADIO DECIBEL NH;86F0;17;756;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+RADIO DECIBEL ZH;87F0;11;720;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+Radio Continu 3 ;8331;0;684;36;64;DAB+;National Music;EEP 3-B;4/6;unknown;
+RADIONL Utrecht ;8821;8;432;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+Qmusic Non-stop ;83B5;18;792;36;64;DAB+;Pop Music;EEP 3-B;4/6;unknown;
+
+
+Ensemble MTVNL           ; ensembleId 8181; channel 5B; frequency 176.639999; time of recording 2020-09-17 09:40:45; SNR 4; 
+
+
+Audio services
+program name;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; genre; prot level; code rate; language
+
+BBC WORLDSERVICE;6335;1;0;36;48;DAB+;News;EEP 3-A;1/2;unknown;
+classicnl       ;83C3;3;36;48;64;DAB+;Serious Classical;EEP 3-A;1/2;unknown;
+
+
+
+Data Services
+program name;serviceId;subchannelId;start address;length (CU); bit rate; FEC; prot level; appType; DSCTy; 
+
+TPEG             (data);E3880101;4;84;48;32;no FEC;EEP 1-A;TPEG;Transparent Data Channel (TDC);yes;
