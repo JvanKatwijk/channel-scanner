@@ -86,10 +86,10 @@ Building an executable
 Assuming the required libraries are installed, building an executable
 is using the cmake/make combination
 
-mkdir build
-cd build
-cmake .. -DXXX=ON
-make
+	mkdir build
+	cd build
+	cmake .. -DXXX=ON
+	make
 
 where XXX is ONE of RTLSDR, SDRPLAY_V2, SDRPLAY_V3, PLUTO
 
