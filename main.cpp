@@ -36,8 +36,10 @@
 #include	"ringbuffer.h"
 #ifdef	HAVE_PLUTO
 #include	"pluto-handler.h"
-#elif	HAVE_SDRPLAY
+#elif	HAVE_SDRPLAY_V2
 #include	"sdrplay-handler.h"
+#elif	HAVE_SDRPLAY_V3
+#include	"sdrplay-handler-v3.h"
 #elif	HAVE_RTLSDR
 #include	"rtlsdr-handler.h"
 #endif
@@ -184,12 +186,19 @@ int16_t		gain		= 60;
 bool		autogain	= false;
 const char	*optionsString	= "RT:F:D:d:M:B:C:G:Q";
 const char	deviceString	= "Compiled for Adalm Pluto";
-#elif	HAVE_SDRPLAY	
+#elif	HAVE_SDRPLAY_V2
 int16_t		GRdB		= 30;
 int16_t		lnaState	= 4;
 bool		autogain	= true;
 int16_t		ppmOffset	= 0;
 const char	deviceString	= "Compiled for SDRPlay (2.13 library)";
+const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";
+#elif	HAVE_SDRPLAY_V3
+int16_t		GRdB		= 30;
+int16_t		lnaState	= 4;
+bool		autogain	= true;
+int16_t		ppmOffset	= 0;
+const char	*deviceString	= "Compiled for SDRPlay (3.06/7 library)";
 const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";
 #elif	HAVE_AIRSPY
 int16_t		gain		= 20;
@@ -217,8 +226,8 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 
 	std::cerr << "dab_channelScanner,\n \
 	                Copyright 2020 J van Katwijk, Lazy Chair Computing\n";
-	std::cerr << deviceString \n\
-	          Software is provided AS IS and licensed under GPL V2\n":
+	std::cerr << deviceString << "\n\
+	          Software is provided AS IS and licensed under GPL V2\n";
 	timeSynced.	store (false);
 	timesyncSet.	store (false);
 	run.		store (false);
@@ -283,7 +292,24 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	         break;
 
 
-#elif	HAVE_SDRPLAY
+#elif	HAVE_SDRPLAY_V2
+	      case 'G':
+	         GRdB		= atoi (optarg);
+	         break;
+
+	      case 'L':
+	         lnaState	= atoi (optarg);
+	         break;
+
+	      case 'Q':
+	         autogain	= true;
+	         break;
+
+	      case 'p':
+	         ppmOffset	= atoi (optarg);
+	         break;
+
+#elif	HAVE_SDRPLAY_V3
 	      case 'G':
 	         GRdB		= atoi (optarg);
 	         break;
@@ -344,8 +370,17 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 
 	int32_t frequency	= MHz (220);	// just a dummy value
 	try {
-#ifdef	HAVE_SDRPLAY
+#ifdef	HAVE_SDRPLAY_V2
 	   theDevice	= new sdrplayHandler (&_I_Buffer,
+	                                      frequency,
+	                                      ppmOffset,
+	                                      GRdB,
+	                                      lnaState,
+	                                      autogain,
+	                                      0,
+	                                      0);
+#elif	HAVE_SDRPLAY_V3
+	   theDevice	= new sdrplayHandler_v3 (&_I_Buffer,
 	                                      frequency,
 	                                      ppmOffset,
 	                                      GRdB,
