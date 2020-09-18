@@ -29,7 +29,9 @@ Settings are done through parameters, e.g.
 	sdrplay-channelScanner -C 12C -C 11C -C 5B -C 5C -C 8A -Q -F /tmp/datafile.txt -R
 
 will scan the channels 12C, 11C, 5B, 5C and 8A, with the autogain set and
+
    a. the combined scandata will be written to the file /tmp/datafile.txt. The file is a text file, but can be read in with e.g. LibreOfficeCalc or similar programs
+
    b. in case the channel contains detectable DAB data, raw data of the channel will be written to a file for "duration" SECONDS. The filename is a combination of the channel, the EID and the date, e.g.  "5B 8181 2020-09-15 10:43:04.sdr"
 
 The basic parameters are
