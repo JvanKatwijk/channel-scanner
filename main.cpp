@@ -417,7 +417,7 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	   exit (33);
 	}
 //
-	for (int i = 0; i < channelList. size (); i ++) {
+	for (uint16_t i = 0; i < channelList. size (); i ++) {
 	   std::string theChannel = channelList. at (i);
 	   handleChannel (theDevice,
 	                  &_I_Buffer,
@@ -518,7 +518,7 @@ dabProcessor theRadio (_I_Buffer,
 	   avg_snr	+= theRadio. get_snr ();
 	   int tii	= theRadio. get_tiiData ();
 	   if (tii != 0) {
-	      int tii_index = 0;
+	      uint16_t tii_index = 0;
 	      for (tii_index = 0; tii_index < tii_data. size (); tii_index ++)
 	         if (tii_data. at (tii_index) == tii)
 	            break;
