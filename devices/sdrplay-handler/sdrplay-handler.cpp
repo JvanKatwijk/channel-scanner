@@ -245,3 +245,7 @@ void	sdrplayHandler::stopDumping	() {
 	sf_close (outFile);
 }
 
+int16_t	sdrplayHandler::bitDepth	() {
+	return nrBits;
+}
+

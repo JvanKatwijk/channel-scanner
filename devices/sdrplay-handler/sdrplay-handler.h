@@ -65,6 +65,7 @@ public:
 	void	stopReader		(void);
 	void	startDumping		(std::string, uint32_t ensembleId);
 	void	stopDumping		();
+	int16_t	bitDepth		();
 //	need to be visible, since being accessed from 
 //	within the callback
 	RingBuffer<std::complex<float>>	*_I_Buffer;

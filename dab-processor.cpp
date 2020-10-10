@@ -372,3 +372,11 @@ bool    dabProcessor::wasSecond (int16_t cf, dabParams *p) {
         }
 }
 
+void    dabProcessor::startDumping      (SNDFILE *f, int dumpScale) {
+        myReader. startDumping (f, dumpScale);
+}
+
+void    dabProcessor::stopDumping() {
+        myReader. stopDumping();
+}
+

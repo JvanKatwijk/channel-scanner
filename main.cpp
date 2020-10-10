@@ -1,23 +1,23 @@
 #
 /*
- *    Copyright (C) 2015, 2016, 2017
+ *    Copyright (C) 2020
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the dab-cmdline
+ *    This file is part of the channel scanner
  *
- *    dab-cmdline is free software; you can redistribute it and/or modify
+ *    channel scanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    dab-cmdline is distributed in the hope that it will be useful,
+ *    channel scanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with dab-cmdline; if not, write to the Free Software
+ *    along with channel scanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -38,8 +38,6 @@
 #include	"pluto-handler.h"
 #elif	HAVE_SDRPLAY_V2
 #include	"sdrplay-handler.h"
-#elif	HAVE_SDRPLAY_V3
-#include	"sdrplay-handler-v3.h"
 #elif	HAVE_RTLSDR
 #include	"rtlsdr-handler.h"
 #endif
@@ -90,6 +88,8 @@ void    ensemblenameHandler (std::string name, int Id, void *userData) {
 
 static
 FILE	*outFile	= stdout;
+static
+SNDFILE	*dumpFile	= nullptr;
 
 static void sighandler (int signum) {
 	fprintf (stderr, "Signal caught, terminating!\n");
@@ -185,33 +185,26 @@ int		duration	= 10;		// seconds, default
 int16_t		gain		= 60;
 bool		autogain	= false;
 const char	*optionsString	= "RT:F:D:d:M:B:C:G:Q";
-const char	deviceString	= "Compiled for Adalm Pluto";
+const char	*deviceString	= "Compiled for Adalm Pluto";
 #elif	HAVE_SDRPLAY_V2
 int16_t		GRdB		= 30;
 int16_t		lnaState	= 4;
 bool		autogain	= true;
 int16_t		ppmOffset	= 0;
-const char	deviceString	= "Compiled for SDRPlay (2.13 library)";
-const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";
-#elif	HAVE_SDRPLAY_V3
-int16_t		GRdB		= 30;
-int16_t		lnaState	= 4;
-bool		autogain	= true;
-int16_t		ppmOffset	= 0;
-const char	*deviceString	= "Compiled for SDRPlay (3.06/7 library)";
+const char	*deviceString	= "Compiled for SDRPlay (2.13 library)";
 const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";
 #elif	HAVE_AIRSPY
 int16_t		gain		= 20;
 bool		autogain	= false;
 bool		rf_bias		= false;
 int16_t		ppmOffset	= 0;
-const char	deviceString	= "Compiled for AIRspy";
+const char	*deviceString	= "Compiled for AIRspy";
 const char	*optionsString	= "RT:F:D:d:M:B:C:G:p:";
 #elif	HAVE_RTLSDR
 int16_t		gain		= 20;
 bool		autogain	= false;
 int16_t		ppmOffset	= 0;
-const char	deviceString	= "Compiled for rtlsdr sticks";
+const char	*deviceString	= "Compiled for rtlsdr sticks";
 const char	*optionsString	= "F:T:D:d:M:B:C:G:p:QR";
 #endif
 bool		dumping		= false;
@@ -309,23 +302,6 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	         ppmOffset	= atoi (optarg);
 	         break;
 
-#elif	HAVE_SDRPLAY_V3
-	      case 'G':
-	         GRdB		= atoi (optarg);
-	         break;
-
-	      case 'L':
-	         lnaState	= atoi (optarg);
-	         break;
-
-	      case 'Q':
-	         autogain	= true;
-	         break;
-
-	      case 'p':
-	         ppmOffset	= atoi (optarg);
-	         break;
-
 #elif	HAVE_RTLSDR
 	      case 'G':
 	         gain		= atoi (optarg);
@@ -372,15 +348,6 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	try {
 #ifdef	HAVE_SDRPLAY_V2
 	   theDevice	= new sdrplayHandler (&_I_Buffer,
-	                                      frequency,
-	                                      ppmOffset,
-	                                      GRdB,
-	                                      lnaState,
-	                                      autogain,
-	                                      0,
-	                                      0);
-#elif	HAVE_SDRPLAY_V3
-	   theDevice	= new sdrplayHandler_v3 (&_I_Buffer,
 	                                      frequency,
 	                                      ppmOffset,
 	                                      GRdB,
@@ -508,8 +475,25 @@ dabProcessor theRadio (_I_Buffer,
 
 	int avg_snr	= 0;
 	std::vector<int> tii_data;
-	if (dumping)
-	   theDevice -> startDumping (theChannel, ensembleId);
+	if (dumping) {
+	   SF_INFO sf_info;
+	   time_t now;
+           time (&now);
+           char buf [sizeof "2020-09-06-08T06:07:09Z"];
+           strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
+           std::string timeString = buf;
+           std::string fileName = theChannel + " " +
+	                          theDevice -> toHex (ensembleId) + " " +
+	                          timeString + ".sdr";
+
+	   sf_info. samplerate	= 2048000;
+           sf_info. channels	= 2;
+           sf_info. format	= SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+           dumpFile = sf_open (fileName. c_str(), SFM_WRITE, &sf_info);
+	   if (outFile != nullptr) 
+	      theRadio. startDumping (dumpFile, theDevice -> bitDepth ());
+	}
+
 	run. store (true);
 
 	for (int i = 0; i < duration; i ++) {
@@ -578,14 +562,17 @@ dabProcessor theRadio (_I_Buffer,
 
 	print_ensembleFooter (outFile, jsonOutput);
 	print_fileFooter (outFile, jsonOutput);
+	theRadio. stopDumping	();
+	sf_close (dumpFile);
 	theRadio. stop		();
-	theDevice	-> stopDumping	();
 	theDevice	-> stopReader	();
 }
 
 void    printOptions (void) {
 	std::cerr << 
-"                          dab-cmdline options are\n"
+"                          schannel scanner options are\n"
+"	                  -F filename write text output to file\n"
+"	                  -R for channel with data, dump raw output\n"
 "	                  -T Duration\tstop after <Duration> seconds\n"
 "	                  -M Mode\tMode is 1, 2 or 4. Default is Mode 1\n"
 "	                  -D number\tamount of time to look for an ensemble\n"

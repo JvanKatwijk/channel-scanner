@@ -348,6 +348,9 @@ std::complex<float> localBuf [DAB_RATE / DIVIDER];
 	   }
 	}
 }
+int16_t	plutoHandler::bitDepth		() {
+	return 12;
+}
 
 void	plutoHandler::startDumping	(std::string s, uint32_t ensembleId) {
 SF_INFO sf_info;

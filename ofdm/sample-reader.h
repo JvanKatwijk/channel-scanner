@@ -31,11 +31,14 @@
 #include	<stdint.h>
 #include	<atomic>
 #include	<vector>
+#include	<sndfile.h>
 #include	"ringbuffer.h"
 //
 
 class	deviceHandler;
 class	dabProcessor;
+
+#define	DUMPSIZE	4096
 
 class	sampleReader {
 public:
@@ -49,6 +52,8 @@ public:
 		std::complex<float> getSample	(int32_t);
 	        void	getSamples	(std::complex<float> *v,
 	                                 int32_t n, int32_t phase);
+	        void	startDumping	(SNDFILE *, int);
+	        void	stopDumping	();
 private:
 		dabProcessor	*theParent;
 	        RingBuffer<std::complex<float>> *_I_Buffer;
@@ -57,6 +62,11 @@ private:
 		float		sLevel;
 		int32_t		sampleCount;
 	        int32_t		corrector;
+		bool		dumping;
+                int16_t		dumpIndex;
+                int16_t		dumpScale;
+                int16_t         dumpBuffer [DUMPSIZE];
+	        std::atomic<SNDFILE *> dumpfilePointer;
 };
 
 #endif

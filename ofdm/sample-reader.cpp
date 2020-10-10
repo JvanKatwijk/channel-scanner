@@ -43,6 +43,10 @@ int	i;
 	                             sin (2.0 * M_PI * i / INPUT_RATE));
 
 	corrector	= 0;
+	dumpfilePointer. store (nullptr);
+        dumpIndex       = 0;
+        dumpScale	= 2048;
+
 	running. store (true);
 }
 
@@ -78,6 +82,15 @@ std::complex<float> temp;
 //
 	_I_Buffer -> getDataFromBuffer (&temp, 1);
 
+	if (dumpfilePointer. load () != nullptr) {
+	   dumpBuffer [2 * dumpIndex + 1] = imag (temp) * dumpScale;
+           if ( ++dumpIndex >= DUMPSIZE / 2) {
+              sf_writef_short (dumpfilePointer. load(),
+                               dumpBuffer, dumpIndex);
+              dumpIndex = 0;
+           }
+        }
+
 //	OK, we have a sample!!
 //	first: adjust frequency. We need Hz accuracy
 	if (phaseOffset != 0) {
@@ -109,6 +122,18 @@ int32_t		i;
 //
 	n = _I_Buffer -> getDataFromBuffer (v, n);
 
+	 if (dumpfilePointer. load() != nullptr) {
+           for (i = 0; i < n; i ++) {
+              dumpBuffer [2 * dumpIndex    ] = real (v [i]) * dumpScale;
+              dumpBuffer [2 * dumpIndex + 1] = imag (v [i]) * dumpScale;
+              if (++dumpIndex >= DUMPSIZE / 2) {
+                 sf_writef_short (dumpfilePointer. load(),
+                                  dumpBuffer, dumpIndex);
+                 dumpIndex = 0;
+              }
+           }
+        }
+
 //	OK, we have samples!!
 //	first: adjust frequency. We need Hz accuracy
 	for (i = 0; i < n; i ++) {
@@ -127,5 +152,17 @@ int32_t		i;
 	   theParent -> show_Corrector (Offset);
 	   sampleCount = 0;
 	}
+}
+static
+int	scales [] =
+	{1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+	 1024, 2048, 4096, 8192, 16384, 32768};
+void    sampleReader::startDumping (SNDFILE *f, int nrBits) {
+        dumpfilePointer. store (f);
+	this	-> dumpScale	= scales [nrBits];
+}
+
+void    sampleReader::stopDumping() {
+        dumpfilePointer. store (nullptr);
 }
 

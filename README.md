@@ -55,7 +55,7 @@ The -R flag, when used, instructs the software to dump the "per channel"
 data - provided some DAB data is found in that channel - into a file.
 The filename will be generated, and consists of the following elements
 
-	channelName EnsembleIdentification Data. extension
+	channelName EnsembleIdentification Data. sdr
 
 Example
 
@@ -65,9 +65,6 @@ indicates that a file with raw data (in ".sdr" format) is written
 on the date as specified, where the input was from channel "12C",
 with the Ensemble Identification 0x8001.
 
-If a "dabstick" is the device in the configured program, the output file
-would have an extension ".iq", and the data was written in 8 bit raw format.
-
 --------------------------------------------------------------------------
 Supported devices
 --------------------------------------------------------------------------
@@ -76,8 +73,7 @@ channel-scanner supports
 
 	a. the RTLSDR devices
 	b. PLUTO devices
-	c. SDRplay devices (different version for 2.13 and 3.06/7 libraries)
-
+	c. SDRplay devices (2.13 library only)
 
 ---------------------------------------------------------------------------
 Building an executable
@@ -91,7 +87,7 @@ is using the cmake/make combination
 	cmake .. -DXXX=ON
 	make
 
-where XXX is ONE of RTLSDR, SDRPLAY_V2, SDRPLAY_V3, PLUTO
+where XXX is ONE of RTLSDR, SDRPLAY_V2, PLUTO
 
 So, one generates an executable for a SINGLE device.
 

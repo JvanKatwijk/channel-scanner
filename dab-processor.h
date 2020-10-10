@@ -83,6 +83,8 @@ public:
 	void		reset_msc		(void);
 	uint16_t	get_tiiData		();
 	uint16_t	get_snr			();
+	void		startDumping		(SNDFILE *, int);
+	void		stopDumping		();
 private:
 //
 	RingBuffer<std::complex<float>>	*_I_Buffer;

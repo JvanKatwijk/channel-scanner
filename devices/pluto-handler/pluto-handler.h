@@ -57,6 +57,7 @@ public:
 	void		stopReader		();
 	void		startDumping		(std::string, uint32_t);
 	void		stopDumping		();
+	int16_t		bitDepth		();
 private:
 
 	std::thread		threadHandle;

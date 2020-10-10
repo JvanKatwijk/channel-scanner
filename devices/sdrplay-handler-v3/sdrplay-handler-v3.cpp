@@ -163,8 +163,8 @@ int			lna_upperBound;
 	chosenDevice	= nullptr;
 	deviceParams	= nullptr;
 
-	denominator		= 2048.0;		// default
-	nrBits			= 12;		// default
+	denominator	= 2048.0;		// default
+	nrBits		= 12;		// default
 	running.  store (false);
 
 //	try to open the API
@@ -290,7 +290,7 @@ int			lna_upperBound;
 	   default:
 	   case 255:		// RSP-1A
 	      lna_upperBound	= 9;
-	      denominator	= 8192.0;
+	      denominator	= 4096.0;
 	      nrBits		= 14;
 	      break;
 	}
@@ -352,6 +352,10 @@ closeAPI:
 	failFlag		= true;
 	sdrplay_api_ReleaseDevice       (chosenDevice);
         sdrplay_api_Close               ();
+}
+
+int16_t	sdrplayHandler_v3::bitDepth	() {
+	return nrBits;
 }
 
 void	sdrplayHandler_v3::startDumping	(std::string s,

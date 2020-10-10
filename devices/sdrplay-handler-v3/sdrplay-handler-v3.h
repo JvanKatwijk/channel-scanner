@@ -50,6 +50,7 @@ public:
 			~sdrplayHandler_v3	();
 	bool		restartReader           (int32_t);
         void		stopReader              (void);
+	int16_t		bitDepth		();
 	void		startDumping		(std::string,
 	                                              uint32_t ensembleId);
 	void		stopDumping		();

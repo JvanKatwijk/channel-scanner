@@ -42,13 +42,13 @@ virtual		void	stopReader	(void);
 virtual		void	startDumping	(std::string, uint32_t);
 virtual		void	stopDumping	();
 virtual		int16_t	bitDepth	(void) { return 10;}
+		std::string	toHex	(uint32_t);
 //
 protected:
 		RingBuffer<std::complex<float>> *_I_Buffer;
 		int32_t	vfoFrequency;
 	        int32_t	vfoOffset;
 	        int	theGain;
-		std::string	toHex	(uint32_t);
 virtual		void	run		(void);
 };
 #endif
