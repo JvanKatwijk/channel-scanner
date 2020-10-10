@@ -4,25 +4,24 @@
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the dab-cmdline
+ *    This file is part of channelScanner
  *
- *    dab-cmdline is free software; you can redistribute it and/or modify
+ *    channelScanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    dab-cmdline is distributed in the hope that it will be useful,
+ *    channelScanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with dab-cmdline; if not, write to the Free Software
+ *    along with channelScanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include	"fic-handler.h"
-#include	"msc-handler.h"
 #include	"protTables.h"
 //
 //	The 3072 bits of the serial motherword shall be split into
@@ -40,22 +39,18 @@
   * 	puncturing.
   *	The data is sent through to the fic processor
   */
-		ficHandler::ficHandler (uint8_t	dabMode,
-	                                ensemblename_t ensemblenameHandler,
-	                                programname_t  programnameHandler,
-	                                fib_quality_t fib_qualityHandler,
+		ficHandler::ficHandler (uint8_t		dabMode,
+	                                callbacks	*the_callBacks,
 	                                void		*userData):
 	                                      viterbiSpiral (768),
-//	                                      viterbiHandler (768),
-	                                      fibProcessor (ensemblenameHandler,
-	                                                    programnameHandler,
+	                                      fibProcessor (the_callBacks,
 	                                                    userData),
 	                                                    params (dabMode) {
 int16_t	i, j, k;
 int16_t	local	= 0;
 
 	(void)dabMode;
-	this	-> fib_qualityHandler	= fib_qualityHandler;
+	this	-> the_callBacks	= the_callBacks;
 	this	-> userData		= userData;
 	index		= 0;
 	BitsperBlock	= 2 * params. get_carriers ();
@@ -198,14 +193,29 @@ int16_t	inputCount	= 0;
 	for (i = ficno * 3; i < ficno * 3 + 3; i ++) {
 	   uint8_t *p = &bitBuffer_out [(i % 3) * 256];
 	   if (!check_CRC_bits (p, 256)) {
-	      show_ficCRC (false);
 	      continue;
 	   }
-	   show_ficCRC (true);
 	   fibProtector. lock ();
 	   fibProcessor. process_FIB (p, ficno);
 	   fibProtector. unlock ();
 	}
+}
+void    ficHandler::dataforAudioService (std::string &s, audiodata *d, int c) {
+        fibProtector. lock ();
+        fibProcessor. dataforAudioService (s, d, c);
+        fibProtector. unlock ();
+}
+
+void    ficHandler::dataforDataService  (std::string &s, packetdata *d, int c) {
+        fibProtector. lock ();
+        fibProcessor. dataforDataService (s, d, c);
+        fibProtector. unlock ();
+}
+
+
+int32_t ficHandler::get_CIFcount        (void) const {
+//      no lock, because using std::atomic<> in fib_processor class
+        return fibProcessor. get_CIFcount();
 }
 
 void	ficHandler::clearEnsemble (void) {
@@ -214,63 +224,17 @@ void	ficHandler::clearEnsemble (void) {
 	fibProtector. unlock ();
 }
 
-uint8_t	ficHandler::kindofService	(std::string &s) {
-uint8_t	result;
-	fibProtector. lock ();
-	result	= fibProcessor. kindofService (s);
-	fibProtector. unlock ();
-	return result;
-}
-
-void	ficHandler::dataforAudioService	(std::string &s, audiodata *d, int c) {
-	fibProtector. lock ();
-	fibProcessor. dataforAudioService (s, d, c);
-	fibProtector. unlock ();
-}
-
-void	ficHandler::dataforDataService	(std::string &s, packetdata *d, int c) {
-	fibProtector. lock ();
-	fibProcessor. dataforDataService (s, d, c);
-	fibProtector. unlock ();
-}
-
-int32_t ficHandler::get_CIFcount        (void) const {
-//	no lock, because using std::atomic<> in fib_processor class
-        return fibProcessor. get_CIFcount();
-}
-
 bool    ficHandler::has_CIFcount        (void) const {
 //	no lock, because using std::atomic<> in fib_processor class
         return fibProcessor. has_CIFcount();
-}
-
-int16_t	ficHandler::get_ficRatio (void) {
-	return ficRatio;
 }
 
 bool	ficHandler::syncReached	(void) {
 	return fibProcessor. syncReached ();
 }
 
-std::string ficHandler::nameFor (int32_t serviceId) {
-	return fibProcessor. nameFor (serviceId);
-}
-
-int32_t	ficHandler::SIdFor	(std::string &name) {
-	return fibProcessor. SIdFor (name);
-}
-
-static	int 	pos	= 0;
-static	int	amount = 0;
-void	ficHandler::show_ficCRC (bool b) {
-	if (b) 
-	   pos ++;
-	if (++amount >= 100) {
-	   if (fib_qualityHandler != nullptr)
-	      fib_qualityHandler (pos, userData);
-	   pos	= 0;
-	   amount	= 0;
-	}
+int32_t ficHandler::SIdFor      (const std::string &name) {
+        return fibProcessor. SIdFor (name);
 }
 
 void	ficHandler::reset	(void) {

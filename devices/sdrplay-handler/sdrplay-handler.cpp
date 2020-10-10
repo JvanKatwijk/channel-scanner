@@ -4,20 +4,20 @@
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the dab-cmdline
+ *    This file is part of channel scanner
  *
- *    dab-cmdline is free software; you can redistribute it and/or modify
+ *    channel scanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    dab-cmdline is distributed in the hope that it will be useful,
+ *    channel scanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with dab-cmdline; if not, write to the Free Software
+ *    along with channel scanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -112,10 +112,6 @@ int	maxlna;
                          mir_sdr_AGC_DISABLE, - GRdB, 0, 0, 0, 0, lnaState);
         if (!autoGain)
            mir_sdr_RSP_SetGr (GRdB, lnaState, 1, 0);
-
-	dumping. store (false);
-	dumpIndex	= 0;
-	running. store (false);
 }
 
 	sdrplayHandler::~sdrplayHandler	(void) {
@@ -145,16 +141,6 @@ float	denominator		= p -> denominator;
 	for (i = 0; i <  (int)numSamples; i ++) {
 	   localBuf [i] = std::complex<float> (float (xi [i]) / denominator,
 	                                       float (xq [i]) / denominator);
-	   if (p -> dumping. load ()) {
-	      p -> dumpBuffer [2 * p -> dumpIndex ]	= xi [i];
-	      p -> dumpBuffer [2 * p -> dumpIndex + 1]	= xq [i];
-	      p -> dumpIndex ++;
-	      if (p -> dumpIndex >= DUMP_SIZE / 2) {
-	         sf_writef_short (p -> outFile,
-	                          p -> dumpBuffer, p -> dumpIndex);
-	         p -> dumpIndex = 0;
-	      }
-	   }
 	}
 	p -> _I_Buffer -> putDataIntoBuffer (localBuf, numSamples);
 	(void)	firstSampleNum;
@@ -212,37 +198,6 @@ void	sdrplayHandler::stopReader	(void) {
 
 	mir_sdr_StreamUninit	();
 	running. store (false);
-}
-
-void	sdrplayHandler::startDumping	(std::string s, uint32_t ensembleId) {
-SF_INFO sf_info;
-time_t now;
-        time (&now);
-        char buf [sizeof "2020-09-06-08T06:07:09Z"];
-        strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
-//      strftime (buf, sizeof (buf), "%FT%TZ", gmtime (&now));
-        std::string timeString = buf;
-        std::string fileName = s + " " + toHex (ensembleId) + " " + timeString + ".sdr";
-
-	if (dumping. load ())
-	   return;
-	sf_info. samplerate	= inputRate;
-        sf_info. channels	= 2;
-        sf_info. format		= SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-        outFile = sf_open (fileName. c_str(), SFM_WRITE, &sf_info);
-	if (outFile == nullptr) {
-	   fprintf (stderr, "could not open %s\n", fileName. c_str ());
-	   return;
-	}
-	dumping. store (true);
-}
-
-void	sdrplayHandler::stopDumping	() {
-	if (!dumping. load ())
-	   return;
-	dumping. store (false);
-	usleep (1000);
-	sf_close (outFile);
 }
 
 int16_t	sdrplayHandler::bitDepth	() {

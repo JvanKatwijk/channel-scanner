@@ -338,8 +338,6 @@ std::complex<float> localBuf [DAB_RATE / DIVIDER];
                                      cmul (convBuffer [inpBase], 1 - inpRatio);
                  }
 
-	         if (dumping. load ())
-	            sf_writef_float (outFile, (float *)localBuf, DAB_RATE / DIVIDER);
 	         _I_Buffer ->  putDataIntoBuffer (localBuf,
 	                                          DAB_RATE / DIVIDER);
 	         convBuffer [0] = convBuffer [CONV_SIZE];
@@ -352,33 +350,3 @@ int16_t	plutoHandler::bitDepth		() {
 	return 12;
 }
 
-void	plutoHandler::startDumping	(std::string s, uint32_t ensembleId) {
-SF_INFO sf_info;
-time_t now;
-        time (&now);
-        char buf [sizeof "2020-09-06-08T06:07:09Z"];
-        strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
-//      strftime (buf, sizeof (buf), "%FT%TZ", gmtime (&now));
-        std::string timeString = buf;
-        std::string fileName = s + " " + toHex (ensembleId) + " " + timeString + ".sdr";
-
-	if (dumping. load ())
-	   return;
-	sf_info. samplerate	= DAB_RATE;
-        sf_info. channels	= 2;
-        sf_info. format		= SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-        outFile = sf_open (fileName. c_str(), SFM_WRITE, &sf_info);
-	if (outFile == nullptr) {
-	   fprintf (stderr, "could not open %s\n", fileName. c_str ());
-	   return;
-	}
-	dumping. store (true);
-}
-
-void	plutoHandler::stopDumping	() {
-	if (!dumping. load ())
-	   return;
-	dumping. store (false);
-	usleep (1000);
-	sf_close (outFile);
-}

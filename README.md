@@ -74,6 +74,9 @@ channel-scanner supports
 	a. the RTLSDR devices
 	b. PLUTO devices
 	c. SDRplay devices (2.13 library only)
+	d. AIRSPY devices
+	e. HACKRF devices
+	f. Lime devices
 
 ---------------------------------------------------------------------------
 Building an executable

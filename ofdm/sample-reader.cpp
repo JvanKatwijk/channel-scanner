@@ -104,7 +104,7 @@ std::complex<float> temp;
 	sampleCount	++;
 	if (++ sampleCount > INPUT_RATE / N) {
 	   sampleCount = 0;
-	   theParent -> show_Corrector (phaseOffset);
+//	   theParent -> show_Corrector (phaseOffset);
 	}
 	return temp;
 }
@@ -149,7 +149,7 @@ int32_t		i;
 
 	sampleCount	+= n;
 	if (sampleCount > INPUT_RATE / N) {
-	   theParent -> show_Corrector (Offset);
+//	   theParent -> show_Corrector (Offset);
 	   sampleCount = 0;
 	}
 }

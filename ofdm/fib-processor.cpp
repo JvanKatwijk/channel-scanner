@@ -96,13 +96,9 @@
                                    {416,1,384}};
 
 //
-	fib_processor::fib_processor (ensemblename_t ensemblenameHandler,
-	                              programname_t  programnameHandler,
+	fib_processor::fib_processor (callbacks	*the_callBacks,
 	                              void	*userData) {
-	this	-> ensemblenameHandler	= ensemblenameHandler;
-	if (programnameHandler == nullptr)
-	   fprintf (stderr, "nullptr detected\n");
-	this	-> programnameHandler	= programnameHandler;
+	this	-> the_callBacks	= the_callBacks;
 	this	-> userData		= userData;
 	memset (dateTime, 0, 8 * sizeof (uint32_t));
 
@@ -670,7 +666,6 @@ int32_t D	= d + 1;
 	if (fig [offset + 20] == 1)
 	   dateTime [5] = getBits_6 (fig, offset + 32);	// Sekunden
 	dateFlag	= true;
-//	emit newDateTime (dateTime);
 }
 //
 //
@@ -1034,7 +1029,7 @@ char		label [17];
 
 //	tricky: the names in the directoty contain spaces at the end
 static
-int	compareNames (std::string in, std::string ref) {
+int	compareNames (const std::string in, const std::string ref) {
 
 	if (ref == in)
 	   return FULL_MATCH;
@@ -1083,7 +1078,7 @@ int16_t	i;
 //	However, in case of servicenames where one is a prefix
 //	of the other, the full match should have precedence over the
 //	prefix match
-serviceId	*fib_processor::findServiceId (std::string serviceName) {
+serviceId	*fib_processor::findServiceId (const std::string serviceName) {
 int16_t	i;
 int	indexforprefixMatch	= -1;
 
@@ -1253,7 +1248,7 @@ int16_t i;
 	return "no service found";
 }
 
-int32_t	fib_processor::SIdFor (std::string &name) {
+int32_t	fib_processor::SIdFor (const std::string &name) {
 int16_t i;
 int	serviceIndex	= -1;
 
@@ -1281,7 +1276,7 @@ int	serviceIndex	= -1;
 }
 //
 //	Here we look for a primary service only
-uint8_t	fib_processor::kindofService (std::string &s) {
+uint8_t	fib_processor::kindofService (const std::string &s) {
 int16_t	i, j;
 int16_t	service		= UNKNOWN_SERVICE;
 int32_t	selectedService = -1;
@@ -1336,11 +1331,12 @@ int	serviceIndex	= -1;
 	return service;
 }
 
-void	fib_processor::dataforDataService (std::string &s, packetdata *d) {
+void	fib_processor::dataforDataService (const std::string &s,
+	                                             packetdata *d) {
 	dataforDataService (s, d, 0);
 }
 
-void	fib_processor::dataforDataService (std::string &s,
+void	fib_processor::dataforDataService (const std::string &s,
 	                                   packetdata *d,
 	                                   int16_t compnr) {
 int16_t	j;
@@ -1385,11 +1381,12 @@ serviceId *selectedService;
 	fibLocker. unlock ();
 }
 
-void	fib_processor::dataforAudioService (std::string &s, audiodata *d) {
+void	fib_processor::dataforAudioService (const std::string &s,
+	                                               audiodata *d) {
 	dataforAudioService (s, d, 0);
 }
 
-void	fib_processor::dataforAudioService (std::string &s,
+void	fib_processor::dataforAudioService (const std::string &s,
 	                                    audiodata *d, int16_t compnr) {
 int16_t	j;
 serviceId *selectedService;
@@ -1436,15 +1433,15 @@ serviceId *selectedService;
 //	in the fib structures, so release the lock
 void	fib_processor::addtoEnsemble	(const std::string &s, int32_t SId) {
 	fibLocker. unlock ();
-	if (programnameHandler != nullptr)
-	   programnameHandler (s, SId, userData);
+	if (the_callBacks -> programnameHandler != nullptr)
+	   the_callBacks -> programnameHandler (s, SId, userData);
 	fibLocker. lock ();
 }
 
 void	fib_processor::nameofEnsemble  (int id, const std::string &s) {
 	fibLocker. unlock ();
-	if (ensemblenameHandler != nullptr)
-	   ensemblenameHandler (s, id, userData);
+	if (the_callBacks -> ensembleHandler != nullptr)
+	   the_callBacks -> ensembleHandler (s, id, userData);
 	fibLocker. lock ();
 	isSynced	= true;
 }

@@ -28,7 +28,6 @@
 #include        <iostream>
 #include	<complex>
 #include	<vector>
-#include	"audiosink.h"
 #include	<sndfile.h>
 #include	"dab-api.h"
 #include	"dab-processor.h"
@@ -40,6 +39,12 @@
 #include	"sdrplay-handler.h"
 #elif	HAVE_RTLSDR
 #include	"rtlsdr-handler.h"
+#elif	HAVE_AIRSPY
+#include	"airspy-handler.h"
+#elif   HAVE_HACKRF
+#include        "hackrf-handler.h"
+#elif   HAVE_LIMESDR
+#include        "lime-handler.h"
 #endif
 #include	"service-printer.h"
 #include	<locale>
@@ -52,16 +57,16 @@ using std::endl;
 void    printOptions (void);	// forward declaration
 void	handleChannel (deviceHandler	*theDevice,
 	               RingBuffer<std::complex<float>> * _I_Buffer,
-	               uint8_t	Mode,
+	               uint8_t		Mode,
 	               uint8_t		theBand,
 	               std::string	theChannel,
-	               int	timeSyncTime,
-	               int	freqSyncTime,
-	               int	duration,
-	               FILE	*outFile,
-	               bool	jsonOutput,
-	               bool	firstEnsemble,
-	               bool	dumping);
+	               int		timeSyncTime,
+	               int		freqSyncTime,
+	               int		duration,
+	               FILE		*outFile,
+	               bool		jsonOutput,
+	               bool		firstEnsemble,
+	               bool		dumping);
 //	we deal with callbacks from different threads. So, if you extend
 //	the functions, take care and add locking whenever needed
 static
@@ -111,7 +116,7 @@ std::vector<int> programSIds;
 
 std::unordered_map <int, std::string> ensembleContents;
 static
-void	programnameHandler (std::string s, int SId, void *userdata) {
+void	addtoEnsemble (std::string s, int SId, void *userdata) {
 	for (std::vector<std::string>::iterator it = programNames.begin();
 	             it != programNames. end(); ++it)
 	   if (*it == s)
@@ -123,58 +128,7 @@ void	programnameHandler (std::string s, int SId, void *userdata) {
 }
 
 static
-void	programdataHandler (audiodata *d, void *ctx) {
-	(void)ctx;
-	std::cerr << "\tstartaddress\t= " << d -> startAddr << "\n";
-	std::cerr << "\tlength\t\t= "     << d -> length << "\n";
-	std::cerr << "\tsubChId\t\t= "    << d -> subchId << "\n";
-	std::cerr << "\tprotection\t= "   << d -> protLevel << "\n";
-	std::cerr << "\tbitrate\t\t= "    << d -> bitRate << "\n";
-}
-
-//
-//	The function is called from within the library with
-//	a string, the so-called dynamic label
-static
-void	dataOut_Handler (std::string dynamicLabel, void *ctx) {
-	(void)ctx;
-	std::cerr << dynamicLabel << "\r";
-}
-//
-//	The function is called from the MOT handler, with
-//	as parameters the filename where the picture is stored
-//	d denotes the subtype of the picture 
-//	typedef void (*motdata_t)(std::string, int, void *);
-void	motdataHandler (std::string s, int d, void *ctx) {
-	(void)s; (void)d; (void)ctx;
-//	fprintf (stderr, "plaatje %s\n", s. c_str ());
-}
-
-//
-static
-void	pcmHandler (int16_t *buffer, int size, int rate,
-	                              bool isStereo, void *ctx) {
-	(void)buffer;
-	(void)size;
-	(void)isStereo;
-	(void)ctx;
-}
-
-static
-void	systemData (bool flag, int16_t snr, int32_t freqOff, void *ctx) {
-//	fprintf (stderr, "synced = %s, snr = %d, offset = %d\n",
-//	                    flag? "on":"off", snr, freqOff);
-}
-
-static
-void	fibQuality	(int16_t q, void *ctx) {
-//	fprintf (stderr, "fic quality = %d\n", q);
-}
-
-static
-void	mscQuality	(int16_t fe, int16_t rsE, int16_t aacE, void *ctx) {
-//	fprintf (stderr, "msc quality = %d %d %d\n", fe, rsE, aacE);
-}
+callbacks	the_callBacks;
 
 int	main (int argc, char **argv) {
 // Default values
@@ -206,6 +160,17 @@ bool		autogain	= false;
 int16_t		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for rtlsdr sticks";
 const char	*optionsString	= "F:T:D:d:M:B:C:G:p:QR";
+#elif	HAVE_HACKRF
+int		lnaGain		= 40;
+int		vgaGain		= 40;
+int		ppmOffset	= 0;
+const char	*deviceString	= "Compiled for hackrf";
+const char	*optionsString	= "F:T:D:d:A:C:G:g:p:R:";
+#elif	HAVE_LIMESDR
+int16_t		gain		= 70;
+std::string	antenna		= "Auto";
+const char	*deviceString	= "Compiled for limesdr";
+const char	*optionsString	= "F:T:RD:d:A:C:G:g:X:";
 #endif
 bool		dumping		= false;
 int16_t		timeSyncTime	= 10;
@@ -216,6 +181,10 @@ struct sigaction sigact;
 deviceHandler	*theDevice	= nullptr;
 bool		firstEnsemble	= true;
 RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
+
+	the_callBacks. signalHandler            = syncsignalHandler;
+        the_callBacks. ensembleHandler          = ensemblenameHandler;
+        the_callBacks. programnameHandler       = addtoEnsemble;
 
 	std::cerr << "dab_channelScanner,\n \
 	                Copyright 2020 J van Katwijk, Lazy Chair Computing\n";
@@ -332,6 +301,29 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	         ppmOffset	= atoi (optarg);
 	         break;
 
+#elif	HAVE_HACKRF
+	      case 'G':
+	         lnaGain	= atoi (optarg);
+	         break;
+
+	      case 'g':
+	         vgaGain	= atoi (optarg);
+	         break;
+
+	      case 'p':
+	         ppmOffset	= 0;
+	         break;
+
+#elif	HAVE_LIME
+	      case 'G':
+	      case 'g':	
+	         gain		= atoi (optarg);
+	         break;
+
+	      case 'X':
+	         antenna	= std::string (optarg);
+	         break;
+
 #endif
 	      default:
 	         fprintf (stderr, "Option %c not understood\n", opt);
@@ -372,6 +364,15 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	                                         ppmOffset,
 	                                         gain,
 	                                         autogain);
+#elif   HAVE_HACKRF
+           theDevice    = new hackrfHandler     (&_I_Buffer,
+                                                 frequency,
+                                                 ppmOffset,
+                                                 lnaGain,
+                                                 vgaGain);
+#elif   HAVE_LIME
+           theDevice    = new limeHandler       (&_I_Buffer,
+                                                 frequency, gain, antenna);
 #endif
 
 	}
@@ -423,16 +424,7 @@ bandHandler     dabBand;
 int32_t frequency	= dabBand. Frequency (theBand, theChannel);
 dabProcessor theRadio (_I_Buffer,
 	               theMode,
-	               syncsignalHandler,
-	               systemData,
-	               ensemblenameHandler,
-	               programnameHandler,
-	               fibQuality,
-	               pcmHandler,
-	               dataOut_Handler,
-	               programdataHandler,
-	               mscQuality,
-	               motdataHandler,	// MOT in PAD
+	               &the_callBacks,
 	               nullptr		// Ctx
 	              );
 
@@ -575,24 +567,30 @@ void    printOptions (void) {
 "	                  -R for channel with data, dump raw output\n"
 "	                  -T Duration\tstop after <Duration> seconds\n"
 "	                  -M Mode\tMode is 1, 2 or 4. Default is Mode 1\n"
+"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
 "	                  -D number\tamount of time to look for an ensemble\n"
 "	                  -d number\tseconds to reach time sync\n"
+"	                  -C Channel, add channel to list of channels\n"
 "	for rtlsdr:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
 "	                  -G Gain in dB (range 0 .. 100)\n"
 "	                  -Q autogain (default off)\n"
 "	for pluto:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
 "	                  -G Gain in dB (range 0 .. 70)\n"
 "	                  -Q autogain (default off)\n"
 	
 "	for SDRplay:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
 "	                  -G Gain reduction in dB (range 20 .. 59)\n"
 "	                  -L lnaState (depends on model chosen)\n"
 "	                  -Q autogain (default off)\n"
-"	                  -p number\t ppm offset\n";
+"	for AIRSPY:\n"
+"	                  -G number\t	gain, range 1 .. 21\n"
+"	                  -b set rf bias\n"
+"       for hackrf:\n"
+"                         -v vgaGain\n"
+"                         -l lnaGain\n"
+"                         -a amp enable (default off)\n"
+"	for limesdr:\n"
+"                         -G number\t gain\n"
+"                         -X antenna selection\n"
+"                         -C channel\n";
 }

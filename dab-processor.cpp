@@ -4,20 +4,20 @@
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the dab-cmdline
+ *    This file is part of channelScanner
  *
- *    dab-cmdline is free software; you can redistribute it and/or modify
+ *    channelScanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    dab-cmdline is distributed in the hope that it will be useful,
+ *    channelScanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with dab-cmdline; if not, write to the Free Software
+ *    along with channelScanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include	"dab-processor.h"
@@ -33,16 +33,7 @@
 
 	dabProcessor::dabProcessor	(RingBuffer<std::complex<float>> *buffer,
 	                                 uint8_t	dabMode,
-	                                 syncsignal_t	syncsignalHandler,
-	                                 systemdata_t	systemdataHandler,
-	                                 ensemblename_t	ensemblename_Handler,
-	                                 programname_t	programname_Handler,
-	                                 fib_quality_t	fibquality_Handler,
-	                                 audioOut_t	audioOut,
-	                                 dataOut_t	dataOut_handler,
-	                                 programdata_t	programdata,
-	                                 programQuality_t mscQuality,
-	                                 motdata_t	motdata_Handler,
+	                                 callbacks	*the_callBacks,
 	                                 void		*userData):
 	                                    params (dabMode),
 	                                    myReader (this, buffer),
@@ -50,20 +41,10 @@
 	                                                       DIFF_LENGTH),
 	                                    my_ofdmDecoder (dabMode),
 	                                    my_ficHandler (dabMode,
-	                                                   ensemblename_Handler,
-                                                           programname_Handler,
-                                                           fibquality_Handler,
+	                                                   the_callBacks, 
 	                                                   userData),
-	                                    my_mscHandler  (dabMode,
-                                                            audioOut,
-                                                            dataOut_handler,
-                                                            mscQuality,
-                                                            motdata_Handler,
-                                                            userData),
 	                                    my_tiiDetector (dabMode) {
-	this	-> syncsignalHandler	= syncsignalHandler;
-	this	-> systemdataHandler	= systemdataHandler;
-	this	-> programdataHandler	= programdata;
+	this	-> the_callBacks	= the_callBacks;
 	this	-> userData		= userData;
 	this	-> T_null		= params. get_T_null ();
 	this	-> T_s			= params. get_T_s ();
@@ -109,7 +90,6 @@ int		tii_delay		= 4;
 	running. store (true);
 	my_ficHandler. reset ();
 	myReader. setRunning (true);
-	my_mscHandler. start ();
 
 	try {
 	   myReader. reset ();
@@ -125,7 +105,7 @@ notSynced:
 
               case NO_DIP_FOUND:
                  if  (++ dip_attempts >= 5) {
-                    syncsignalHandler (false, userData);
+                    the_callBacks -> signalHandler (false, userData);
                     dip_attempts = 0;
                  }
                  goto notSynced;
@@ -143,7 +123,7 @@ notSynced:
 	   if (startIndex < 0) { // no sync, try again
 	      isSynced	= false;
 	      if (++index_attempts > 10) {
-	         syncsignalHandler (false, userData);
+	         the_callBacks -> signalHandler (false, userData);
 	         index_attempts	= 0;
 	      }
 //	      fprintf (stderr, "startIndex %d\n", startIndex);
@@ -171,7 +151,7 @@ SyncOnPhase:
 	   index_attempts	= 0;
 	   dip_attempts		= 0;
 	   isSynced		= true;
-	   syncsignalHandler (isSynced, userData);
+	   the_callBacks -> signalHandler (isSynced, userData);
 
 //	Once here, we are synchronized, we need to copy the data we
 //	used for synchronization for block 0
@@ -189,7 +169,6 @@ SyncOnPhase:
 	                  T_u - ofdmBufferIndex,
 	                  coarseOffset + fineOffset);
 	   my_ofdmDecoder. processBlock_0	(ofdmBuffer. data ());
-	   my_mscHandler.  process_mscBlock	(ofdmBuffer. data (), 0);
 //
 //	if correction is needed (known by the fic handler)
 //	we compute the coarse offset in the phaseSynchronizer
@@ -227,8 +206,6 @@ SyncOnPhase:
 	                                 ofdmSymbolCount, ibits. data ());
 	         my_ficHandler. process_ficBlock (ibits, ofdmSymbolCount);
 	      }
-	      my_mscHandler. process_mscBlock (&((ofdmBuffer. data ()) [T_g]),
-	                                                   ofdmSymbolCount);
 	   }
 
 //	we integrate the newly found frequency error with the
@@ -271,7 +248,6 @@ SyncOnPhase:
 	   fprintf (stderr, "dab processor will stop\n");
 	}
 
-	my_mscHandler.  stop ();
 //	fprintf (stderr, "dabProcessor is shutting down\n");
 }
 
@@ -287,27 +263,6 @@ void	dabProcessor::stop	(void) {
 	   sleep (1);
 	   threadHandle. join ();
 	}
-}
-
-void	dabProcessor::call_systemData (bool f, int16_t snr, int32_t freq) {
-	if (systemdataHandler != nullptr)
-	   systemdataHandler (f, snr, freq, userData);
-}
-
-void	dabProcessor::show_Corrector (int freqOffset) {
-	if (systemdataHandler != nullptr)
-	   systemdataHandler (isSynced,
-	                      snr,
-	                      freqOffset, userData);
-}
-
-bool	dabProcessor::signalSeemsGood	(void) {
-	return isSynced;
-}
-//
-//	to be handled by delegates
-uint8_t dabProcessor::kindofService	(std::string s) {
-        return my_ficHandler. kindofService (s);
 }
 
 void    dabProcessor::dataforAudioService	(std::string s,audiodata *dd) {
@@ -328,10 +283,6 @@ int32_t	dabProcessor::get_SId		(std::string s) {
 	return my_ficHandler. SIdFor (s);
 }
 
-std::string dabProcessor::get_serviceName (int32_t SId) {
-	return my_ficHandler. nameFor (SId);
-}
-
 uint16_t	dabProcessor::get_tiiData	() {
 	if ((subId == -1) || (mainId == -1))
 	   return 0;
@@ -342,21 +293,8 @@ uint16_t	dabProcessor::get_snr	() {
 	return snr;
 }
 
-void    dabProcessor::reset_msc (void) {
-        my_mscHandler. reset ();
-}
-
-void    dabProcessor::set_audioChannel (audiodata *d) {
-        my_mscHandler. set_audioChannel (d);
-	programdataHandler (d, userData);
-}
-
-void    dabProcessor::set_dataChannel (packetdata *d) {
-	my_mscHandler. set_dataChannel (d);
-}
-
 void    dabProcessor::clearEnsemble     (void) {
-        my_ficHandler. reset ();
+	my_ficHandler. reset ();
 }
 
 bool    dabProcessor::wasSecond (int16_t cf, dabParams *p) {

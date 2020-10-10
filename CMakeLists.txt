@@ -28,21 +28,25 @@ list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 ######################################################################
 #
 ########################################################################
-OPTION(SDRPLAY  "Input: SDRPLAY_V2"  OFF)
+OPTION(SDRPLAY  "Input: SDRPLAY"  OFF)
 OPTION(PLUTO	"Input: PLUTO"	  OFF)
 OPTION(PLUTO	"Input: RTLSDR"	  OFF)
+OPTION(AIRSPY	"Input: AIRSPY"	  OFF)
+OPTION(HACKRF	"Input: HACKRF"	  OFF)
+OPTION(LIMESDR	"Input: LIMESDR"  OFF)
 OPTION(X64_DEFINED "optimize for x64/SSE"  OFF)
 OPTION(RPI_DEFINED "optimize for ARM/NEON" OFF)
 
 
-if ( (NOT SDRPLAY_V2) AND (NOT PLUTO) AND (NOT RTLSDR) )
-   message("None of the Input Options selected. Using default SDRPLAY_V2")
-   set(SDRPLAY_V2 ON)
+if ( (NOT SDRPLAY) AND (NOT PLUTO) AND (NOT RTLSDR) AND (NOT AIRSPY) AND
+     (NOT HACKRF) AND (NOT LIMESDR))
+   message("None of the Input Options selected. Using default SDRPLAY")
+   set(SDRPLAY ON)
 endif ()
 
 set (objectName "")
 
-if(SDRPLAY_V2)
+if(SDRPLAY)
    if (objectName STREQUAL "")
       set(SDRPLAY_V2 ON)
       set(objectName sdrplay-channelScanner)
@@ -64,6 +68,33 @@ if(PLUTO)
    if (objectName STREQUAL "")
       set(PLUTOSDR ON)
       set(objectName pluto-channelScanner)
+   else ()
+      message ("Ignoring second option")
+   endif ()
+endif ()
+
+if(AIRSPY)
+   if (objectName STREQUAL "")
+      set(AIRSPY ON)
+      set(objectName airspy-channelScanner)
+   else ()
+      message ("Ignoring second option")
+   endif ()
+endif ()
+
+if(HACKRF)
+   if (objectName STREQUAL "")
+      set(HACKRF ON)
+      set(objectName hackrf-channelScanner)
+   else ()
+      message ("Ignoring second option")
+   endif ()
+endif ()
+
+if(LIMESDR)
+   if (objectName STREQUAL "")
+      set(LIMESDR ON)
+      set(objectName limesdr-channelScanner)
    else ()
       message ("Ignoring second option")
    endif ()
@@ -132,7 +163,7 @@ endif ()
 	   )
 
 	   add_definitions (-DHAVE_SDRPLAY_V2)
-	endif (SDRPLAY)
+	endif (SDRPLAY_V2)
 
 
 	if (RTLSDR)
@@ -214,11 +245,65 @@ endif ()
 	   add_definitions (-DHAVE_AIRSPY)
 	endif (AIRSPY)
 
-        find_package(Portaudio)
-        if (NOT PORTAUDIO_FOUND)
-            message(FATAL_ERROR "please install portaudio V19")
-        endif ()
-        list(APPEND extraLibs ${PORTAUDIO_LIBRARIES})
+	if (HACKRF)
+	   find_path (HACKLIB_INCLUDE_DIR
+                      NAMES hackrf.h
+                      PATHS
+	              ./devices/hackrf-handler/libhackrf/
+                       /usr/local/include/
+	   )
+           include_directories (${HACKLIB_INCLUDE_DIR})
+
+           find_library (HACKLIB hackrf)
+           if(NOT(HACKLIB))
+              message(FATAL_ERROR "please install -lhackrf")
+           else(NOT(HACKLIB))
+              list (APPEND extraLibs ${HACKLIB})
+           endif(NOT(HACKLIB))
+
+	   include_directories (
+	     ./devices/hackrf-handler
+	   )
+
+	   set ($(objectName)_HDRS
+	        ${${objectName}_HDRS}
+	        ./devices/hackrf-handler/hackrf-handler.h
+           )
+
+	   set (${objectName}_SRCS
+	        ${${objectName}_SRCS}
+	        ./devices/hackrf-handler/hackrf-handler.cpp
+	   )
+
+	 add_definitions (-DHAVE_HACKRF)
+	endif (HACKRF)
+
+	if (LIMESDR)
+           find_library (LIMELIB LimeSuite)
+           if(NOT(LIMELIB))
+              message(FATAL_ERROR "please install LimeSuite")
+           else(NOT(LIMELIB))
+              list (APPEND extraLibs ${LIMELIB})
+           endif(NOT(LIMELIB))
+
+	   include_directories (
+	     ./devices/lime-handler
+	   )
+
+	   set ($(objectName)_HDRS
+	        ${${objectName}_HDRS}
+	        ./devices/lime-handler/LMS7002M_parameters.h
+	        ./devices/lime-handler/LimeSuite.h
+	        ./devices/lime-handler/lime-handler.h
+           )
+
+	   set (${objectName}_SRCS
+	        ${${objectName}_SRCS}
+	        ./devices/lime-handler/lime-handler.cpp
+	   )
+
+	 add_definitions (-DHAVE_LIMESDR)
+	endif (LIMESDR)
 
         find_package(zlib)
 	if (NOT ZLIB_FOUND)
@@ -242,13 +327,8 @@ endif ()
 	           .
 	           ./
 	           ./devices
-	           ./audio-sink
 	           ./dab-streamer
 	           ./ofdm
-	           ./backend
-	           ./backend/audio
-	           ./backend/data
-	           ./backend/data/mot
 	           ./support
 	           ./support/viterbi-spiral
 	           /usr/include/
@@ -260,9 +340,6 @@ endif ()
 	     ./dab-api.h
 	     ./service-printer.h
 	     ./dab_tables.h
-	     ./audio-sink/audio-base.h
-	     ./audio-sink/audiosink.h
-	     ./audio-sink/newconverter.h
 	     ./devices/device-handler.h
 	     ./dab-processor.h
 	     ./ofdm/phasereference.h
@@ -273,31 +350,15 @@ endif ()
 	     ./ofdm/fib-processor.cpp
 	     ./ofdm/sample-reader.h
 	     ./ofdm/tii_detector.h
-	     ./backend/firecode-checker.h
-	     ./backend/backend-base.h
-	     ./backend/charsets.h
-	     ./backend/galois.h
-	     ./backend/reed-solomon.h
-	     ./backend/msc-handler.h
-	     ./backend/virtual-backend.h
-	     ./backend/audio-backend.h
-	     ./backend/audio/faad-decoder.h
-	     ./backend/audio/mp4processor.h 
-	     ./backend/audio/mp2processor.h 
-	     ./backend/data/virtual-datahandler.h 
-	     ./backend/data/pad-handler.h 
-	     ./backend/data/mot/mot-handler.h 
-	     ./backend/data/mot/mot-dir.h 
-	     ./backend/data/mot/mot-object.h 
 	     ./support/ringbuffer.h
 	     ./support/band-handler.h
-#	     ./support/viterbi-handler.h
 	     ./support/protTables.h
 	     ./support/protection.h
 	     ./support/uep-protection.h
 	     ./support/eep-protection.h
 	     ./support/fft_handler.h
 	     ./support/dab-params.h
+	     ./support/charsets.h
 	     ./support/viterbi-spiral/viterbi-spiral.h
 	)
 
@@ -306,9 +367,6 @@ endif ()
 	     ./main.cpp
 	     ./service-printer.cpp
 	     ./dab_tables.cpp
-	     ./audio-sink/audio-base.cpp
-	     ./audio-sink/audiosink.cpp
-	     ./audio-sink/newconverter.cpp
 	     ./devices/device-handler.cpp
 	     ./dab-processor.cpp
 	     ./ofdm/ofdm-decoder.cpp
@@ -320,21 +378,6 @@ endif ()
 	     ./ofdm/fib-processor.cpp
 	     ./ofdm/fic-handler.cpp
 	     ./ofdm/tii_detector.cpp
-	     ./backend/firecode-checker.cpp
-	     ./backend/backend-base.cpp
-	     ./backend/charsets.cpp
-	     ./backend/galois.cpp
-	     ./backend/reed-solomon.cpp
-	     ./backend/msc-handler.cpp
-	     ./backend/virtual-backend.cpp
-	     ./backend/audio-backend.cpp
-	     ./backend/audio/mp4processor.cpp 
-	     ./backend/audio/mp2processor.cpp 
-	     ./backend/data/virtual-datahandler.cpp 
-	     ./backend/data/pad-handler.cpp 
-	     ./backend/data/mot/mot-handler.cpp 
-	     ./backend/data/mot/mot-dir.cpp 
-	     ./backend/data/mot/mot-object.cpp 
 	     ./support/band-handler.cpp
 #	     ./support/viterbi-handler.cpp
 	     ./support/protTables.cpp
@@ -343,6 +386,7 @@ endif ()
 	     ./support/uep-protection.cpp
 	     ./support/fft_handler.cpp
 	     ./support/dab-params.cpp
+	     ./support/charsets.cpp
 	     ./support/viterbi-spiral/viterbi-spiral.cpp
 	)
 

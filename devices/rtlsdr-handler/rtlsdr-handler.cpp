@@ -73,17 +73,6 @@ std::complex<float> localBuf [len / 2];
 	for (uint32_t i = 0; i < len / 2; i ++) {
 	   localBuf [i] = std::complex<float> (convTable [buf [2 * i]],
 	                                       convTable [buf [2 * i + 1]]);
-	   if (theStick	-> dumping. load ()) {
-	      theStick -> dumpBuffer [2 * theStick -> dumpIndex    ] =
-	                                             buf [2 * i    ];
-              theStick -> dumpBuffer [2 * theStick -> dumpIndex + 1] =
-	                                             buf [2 * i + 1];
-              if (++ theStick -> dumpIndex >= DUMP_SIZE / 2) {
-                 fwrite (theStick -> dumpBuffer, 1, DUMP_SIZE,
-	                                              theStick -> outFile);
-                 theStick -> dumpIndex = 0;
-	      }
-           }
         }
 
 	(void) theStick -> _I_Buffer -> putDataIntoBuffer (localBuf, len / 2);
@@ -118,8 +107,6 @@ int16_t	i;
 	this	-> ppmCorrection	= ppmCorrection;
 	this	-> theGain	= gain;
 	this	-> autogain	= autogain;
-	outFile			= nullptr;
-	dumping. store (false);
 	this	-> deviceIndex	= deviceIndex;
 
 	dumpIndex		= 0;
@@ -251,34 +238,6 @@ int32_t	r;
 	return true;
 }
 
-void	rtlsdrHandler::startDumping	(std::string s, uint32_t ensembleId) {
-time_t now;
-        time (&now);
-        char buf [sizeof "2020-09-06-08T06:07:09Z"];
-        strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
-//      strftime (buf, sizeof (buf), "%FT%TZ", gmtime (&now));
-        std::string timeString = buf;
-        std::string fileName = s + " " + toHex (ensembleId) + " " + timeString + ".iq";
-
-	if (dumping. load ())
-	   return;
-	outFile		= fopen (fileName. c_str (), "w+b");
-	if (outFile == nullptr) {
-	   fprintf (stderr, "could not open %s\n", fileName. c_str ());
-	   return;
-	}
-	dumpIndex	= 0;
-	dumping. store (true);
-}
-
-void	rtlsdrHandler::stopDumping	() {
-	if (!dumping. load ())
-	   return;
-	dumping. store (false);
-	usleep (1000);
-	fclose (outFile);
-	outFile	= nullptr;
-}
 
 void	rtlsdrHandler::stopReader	(void) {
 	if (!running)
@@ -435,10 +394,6 @@ bool	rtlsdrHandler::load_rtlFunctions (void) {
 
 void	rtlsdrHandler::resetBuffer (void) {
 	_I_Buffer -> FlushRingBuffer ();
-}
-
-int16_t	rtlsdrHandler::maxGain	(void) {
-	return gainsCount;
 }
 
 int16_t	rtlsdrHandler::bitDepth	(void) {

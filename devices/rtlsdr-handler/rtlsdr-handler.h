@@ -4,20 +4,20 @@
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the DAB library
+ *    This file is part of channel scanner
  *
- *    DAB library is free software; you can redistribute it and/or modify
+ *    channel scanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    DAB library is distributed in the hope that it will be useful,
+ *    channel scanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with DAB library; if not, write to the Free Software
+ *    along with channel scanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -81,20 +81,13 @@ public:
 //	interface to the reader
 	bool		restartReader	(int32_t	frequency);
 	void		stopReader	(void);
-	void		startDumping	(std::string, uint32_t);
-	void		stopDumping	();
 	void		resetBuffer	(void);
-	int16_t		maxGain		(void);
 	int16_t		bitDepth	(void);
 //
 //	These need to be visible for the separate usb handling thread
 	RingBuffer<std::complex<float>>	*_I_Buffer;
 	pfnrtlsdr_read_async	rtlsdr_read_async;
 	struct rtlsdr_dev	*device;
-	FILE		*outFile;
-	std::atomic<bool>	dumping;
-	uint8_t		dumpBuffer [DUMP_SIZE];
-	int		dumpIndex;
 private:
 	int32_t		inputRate;
 	uint16_t	deviceIndex;

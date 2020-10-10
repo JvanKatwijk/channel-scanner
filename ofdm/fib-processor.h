@@ -4,20 +4,20 @@
  *    Jan van Katwijk (J.vanKatwijk@gmail.com)
  *    Lazy Chair Computing
  *
- *    This file is part of the dab-cmdline
+ *    This file is part of channelScanner
  *
- *    dab-cmdline is free software; you can redistribute it and/or modify
+ *    channelScanner is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
- *    dab-cmdline is distributed in the hope that it will be useful,
+ *    channelScanner is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with dab-cmdline; if not, write to the Free Software
+ *    along with channelScanner; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #
@@ -91,8 +91,7 @@
 
 class	fib_processor {
 public:
-		fib_processor		(ensemblename_t,
-	                                 programname_t,
+		fib_processor		(callbacks	*,
 	                                 void	*);
 		~fib_processor		(void);
 	void	process_FIB		(uint8_t *, uint16_t);
@@ -101,12 +100,12 @@ public:
 	void	clearEnsemble		(void);
 	bool	syncReached		(void);
 	std::string nameFor		(int32_t);
-	int32_t	SIdFor			(std::string &);
-	uint8_t	kindofService		(std::string &);
-	void	dataforAudioService	(std::string &, audiodata *);
-	void	dataforDataService	(std::string &, packetdata *);
-	void	dataforAudioService	(std::string &, audiodata *, int16_t);
-	void	dataforDataService	(std::string &, packetdata *, int16_t);
+	int32_t	SIdFor			(const std::string &);
+	uint8_t	kindofService		(const std::string &);
+	void	dataforAudioService	(const std::string &, audiodata *);
+	void	dataforDataService	(const std::string &, packetdata *);
+	void	dataforAudioService	(const std::string &, audiodata *, int16_t);
+	void	dataforDataService	(const std::string &, packetdata *, int16_t);
 
 	void	reset			();
 	int32_t get_CIFcount            (void) const;
@@ -114,8 +113,7 @@ public:
         void    newFrame                (void);
 
 private:
-	ensemblename_t	ensemblenameHandler;
-	programname_t	programnameHandler;
+	callbacks	*the_callBacks;
 	void		*userData;
 	serviceId	*findServiceId (int32_t);
 	serviceComponent *find_packetComponent (int16_t);
