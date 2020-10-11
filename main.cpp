@@ -83,12 +83,30 @@ std::atomic<bool>ensembleRecognized;
 std::string     ensembleName;
 uint32_t        ensembleId;
 static
-void    ensemblenameHandler (std::string name, int Id, void *userData) {
+void    ensembleHandler (std::string name, int Id, void *userData) {
         fprintf (stderr, "ensemble %s is (%X) recognized\n",
                                   name. c_str (), (uint32_t)Id);
         ensembleRecognized. store (true);
         ensembleName    = name;
         ensembleId      = Id;
+}
+
+std::vector<std::string> programNames;
+std::vector<int> programSIds;
+
+#include	<bits/stdc++.h>
+
+std::unordered_map <int, std::string> ensembleContents;
+static
+void	addtoEnsemble (std::string s, int SId, void *userdata) {
+	for (std::vector<std::string>::iterator it = programNames.begin();
+	             it != programNames. end(); ++it)
+	   if (*it == s)
+	      return;
+	ensembleContents. insert (pair <int, std::string> (SId, s));
+	programNames. push_back (s);
+	programSIds . push_back (SId);
+	std::cerr << "program " << s << " is part of the ensemble\n";
 }
 
 static
@@ -109,24 +127,6 @@ void	syncsignalHandler (bool b, void *userData) {
 	(void)userData;
 }
 //
-std::vector<std::string> programNames;
-std::vector<int> programSIds;
-
-#include	<bits/stdc++.h>
-
-std::unordered_map <int, std::string> ensembleContents;
-static
-void	addtoEnsemble (std::string s, int SId, void *userdata) {
-	for (std::vector<std::string>::iterator it = programNames.begin();
-	             it != programNames. end(); ++it)
-	   if (*it == s)
-	      return;
-	ensembleContents. insert (pair <int, std::string> (SId, s));
-	programNames. push_back (s);
-	programSIds . push_back (SId);
-	std::cerr << "program " << s << " is part of the ensemble\n";
-}
-
 static
 callbacks	the_callBacks;
 
@@ -183,7 +183,7 @@ bool		firstEnsemble	= true;
 RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 
 	the_callBacks. signalHandler            = syncsignalHandler;
-        the_callBacks. ensembleHandler          = ensemblenameHandler;
+        the_callBacks. ensembleHandler          = ensembleHandler;
         the_callBacks. programnameHandler       = addtoEnsemble;
 
 	std::cerr << "dab_channelScanner,\n \
