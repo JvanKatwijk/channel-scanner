@@ -22,9 +22,11 @@
  */
 
 #include	"sdrplay-handler.h"
+#include	"xml-filewriter.h"
 #include	<unistd.h>
 
 	sdrplayHandler::sdrplayHandler  (RingBuffer<std::complex<float>> *b,
+	                                 const std::string &recorderVersion,
 	                                 int32_t	frequency,
 	                                 int16_t	ppm,
 	                                 int16_t	GRdB,
@@ -39,6 +41,7 @@ mir_sdr_DeviceT devDesc [4];
 int	maxlna;
 
 	this	-> _I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
         this    -> frequency            = frequency;
         this    -> ppmCorrection        = ppm;
         this    -> GRdB			= GRdB;
@@ -79,27 +82,32 @@ int	maxlna;
 	      err = mir_sdr_RSPII_AntennaControl (mir_sdr_RSPII_ANTENNA_B);
 	   }
 	}
-	if (hwVersion == 255) {
-	   nrBits	= 14;
-	   denominator	= 8192.0;
-	   maxlna	= 9;
-	}
-        else 
+	deviceModel	= "????";
 	if (hwVersion == 1) {
            nrBits	= 12;
 	   denominator	= 2048.0;
 	   maxlna	= 3;
+	   deviceModel	= "RSP I";
 	}
 	else
 	if (hwVersion == 2) {
            nrBits	= 12;
 	   denominator	= 2048.0;
 	   maxlna	= 8;
+	   deviceModel	= "RSP II";
+	}
+	else 
+	if (hwVersion == 3) {
+	   nrBits	= 14;
+	   denominator	= 8192;
+	   maxlna	= 9;
+	   deviceModel	= "RSP-DUO";
 	}
 	else {
-           nrBits	= 12;
-	   denominator	= 2048.0;
+           nrBits	= 14;
+	   denominator	= 8192.0;
 	   maxlna	= 9;
+	   deviceModel	= "RSP Ia";
 	}
 
 	if (lnaState < 0) 
@@ -112,6 +120,7 @@ int	maxlna;
                          mir_sdr_AGC_DISABLE, - GRdB, 0, 0, 0, 0, lnaState);
         if (!autoGain)
            mir_sdr_RSP_SetGr (GRdB, lnaState, 1, 0);
+	dumping. store (false);
 }
 
 	sdrplayHandler::~sdrplayHandler	(void) {
@@ -134,6 +143,7 @@ void myStreamCallback (int16_t		*xi,
 int16_t	i;
 sdrplayHandler	*p	= static_cast<sdrplayHandler *> (cbContext);
 std::complex<float> localBuf [numSamples];
+std::complex<int16_t> dumpBuf [numSamples];
 float	denominator		= p -> denominator;
 
 	if (reset || hwRemoved)
@@ -141,7 +151,10 @@ float	denominator		= p -> denominator;
 	for (i = 0; i <  (int)numSamples; i ++) {
 	   localBuf [i] = std::complex<float> (float (xi [i]) / denominator,
 	                                       float (xq [i]) / denominator);
+	   dumpBuf  [i] = std::complex<int16_t> (xi [i], xq [i]);
 	}
+	if (p -> dumping. load ())
+	   p -> xmlWriter -> add (dumpBuf, numSamples);
 	p -> _I_Buffer -> putDataIntoBuffer (localBuf, numSamples);
 	(void)	firstSampleNum;
 	(void)	grChanged;
@@ -202,5 +215,35 @@ void	sdrplayHandler::stopReader	(void) {
 
 int16_t	sdrplayHandler::bitDepth	() {
 	return nrBits;
+}
+
+std::string	sdrplayHandler::deviceName	() {
+	return "SDRplay";
+}
+
+void	sdrplayHandler::startDumping	(const std::string &fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      nrBits,
+	                                      "int16",
+	                                      2048000,
+	                                      frequency,
+	                                      "SDRplay",
+	                                      deviceModel,
+	                                      recorderVersion);
+	dumping. store (true);
+}
+
+void	sdrplayHandler::stopDumping	() {
+	if (xmlFile == nullptr)	// this can happen !!
+	   return;
+	dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
 }
 

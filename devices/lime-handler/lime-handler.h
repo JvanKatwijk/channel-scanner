@@ -30,10 +30,12 @@
 #include	"ringbuffer.h"
 #include	<LimeSuite.h>
 #include	"device-handler.h"
+class	xml_fileWriter;
 
 class	limeHandler: public deviceHandler {
 public:
 			limeHandler		(RingBuffer<std::complex<float>> *,
+	                                         const std::string &,
 	                                         int32_t	frequency,
 	                                         int16_t	gain,
 	                                         std::string	antenna);
@@ -42,8 +44,15 @@ public:
 	void		stopReader		(void);
         void            resetBuffer             (void);
         int16_t         bitDepth                (void);
+	void		startDumping		(const std::string &);
+	void		stopDumping		();
+	std::string	deviceName		();
 
 private:
+	std::string		recorderVersion;
+	xml_fileWriter		*xmlWriter;
+	std::atomic<bool>	dumping;
+	FILE			*xmlFile;
 	std::atomic<bool>	running;
 	std::thread		threadHandle;
 	int32_t			frequency;

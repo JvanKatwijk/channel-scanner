@@ -29,6 +29,7 @@
 #include	"device-handler.h"
 #include	"libhackrf/hackrf.h"
 
+class	xml_fileWriter;
 typedef int (*hackrf_sample_block_cb_fn)(hackrf_transfer *transfer);
 
 
@@ -36,6 +37,7 @@ typedef int (*hackrf_sample_block_cb_fn)(hackrf_transfer *transfer);
 class	hackrfHandler: public deviceHandler {
 public:
 			hackrfHandler		(RingBuffer<std::complex<float>> *,
+	                                         const std::string &,
 	                                         int32_t frequency,
 	                                         int16_t  ppm,
                                                  int16_t  lnaGain,
@@ -46,11 +48,17 @@ public:
 	void		stopReader		(void);
 	void		resetBuffer		(void);
 	int16_t		bitDepth		(void);
+	void		startDumping		(const std::string &);
+	void		stopDumping		();
 //
 //	The buffer should be visible by the callback function
 	RingBuffer<std::complex<float>>	*_I_Buffer;
 	hackrf_device	*theDevice;
+	std::atomic<bool>	dumping;
+	xml_fileWriter	*xmlWriter;
 private:
+	std::string	recorderVersion;
+	FILE		*xmlFile;
 	int32_t		vfoFrequency;
 	int16_t		lnaGain;
 	int16_t		vgaGain;

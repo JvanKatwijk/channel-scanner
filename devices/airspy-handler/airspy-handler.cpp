@@ -21,8 +21,9 @@
 #define	GETPROCADDRESS	dlsym
 #endif
 
-#include "airspy-handler.h"
-
+#include	"airspy-handler.h"
+#include	"xml-filewriter.h"
+#include	<unistd.h>
 static
 const	int	EXTIO_NS	=  8192;
 static
@@ -34,6 +35,7 @@ std::complex<float> cmul (std::complex<float> x, float y) {
 }
 
 	airspyHandler::airspyHandler (RingBuffer<std::complex<float>> *b,
+	                              const std::string &recorderVersion,
 	                              int32_t	frequency,
 	                              int16_t	ppmCorrection,
 	                              int16_t	theGain,
@@ -44,10 +46,11 @@ int	distance	= 10000000;
 uint32_t myBuffer [20];
 uint32_t samplerate_count;
 
-	this	-> _I_Buffer	= b;
-	this	-> frequency	= frequency;
-	this	-> ppmCorrection = ppmCorrection;
-	this	-> theGain	= theGain;
+	this	-> _I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
+	this	-> frequency		= frequency;
+	this	-> ppmCorrection	= ppmCorrection;
+	this	-> theGain		= theGain;
 //
 	device			= 0;
 	serialNumber		= 0;
@@ -156,7 +159,7 @@ uint32_t samplerate_count;
 
 	convIndex		= 0;
 	convBuffer		= new std::complex<float> [convBufferSize + 1];
-
+	dumping. store (false);
 	running		= false;
 //
 //	Here we set the gain and frequency
@@ -298,6 +301,8 @@ int nSamples	= buf_size / (sizeof (int16_t) * 2);
 std::complex<float> temp [2048];
 int32_t  i, j;
 
+	if (dumping. load ())
+	   xmlWriter -> add ((std::complex<int16_t> *)sbuf, nSamples);
 	for (i = 0; i < nSamples; i ++) {
 	   convBuffer [convIndex ++] = std::complex<float> (sbuf [2 * i] / (float)2048,
 	                                           sbuf [2 * i + 1] / (float)2048);
@@ -357,6 +362,37 @@ void	airspyHandler::resetBuffer (void) {
 int16_t	airspyHandler::bitDepth (void) {
 	return 13;
 }
+
+std::string	airspyHandler::deviceName	() {
+	return "AIRspy";
+}
+
+void	airspyHandler::startDumping	(const std::string &fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      12,
+	                                      "int16",
+	                                      selectedRate,
+	                                      frequency,
+	                                      "AIRspy",
+	                                      "old",
+	                                      recorderVersion);
+	dumping. store (true);
+}
+
+void	airspyHandler::stopDumping	() {
+	if (xmlFile == nullptr)	// this can happen !!
+	   return;
+	dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
+}
+
 //
 const char* airspyHandler::board_id_name (void) {
 uint8_t bid;

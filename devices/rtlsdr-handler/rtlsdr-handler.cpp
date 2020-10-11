@@ -28,6 +28,7 @@
 
 #include	"rtl-sdr.h"
 #include	"rtlsdr-handler.h"
+#include	"xml-filewriter.h"
 #include	<unistd.h>
 
 #ifdef	__MINGW32__
@@ -66,14 +67,18 @@ static
 void	RTLSDRCallBack (uint8_t *buf, uint32_t len, void *ctx) {
 rtlsdrHandler	*theStick	= (rtlsdrHandler *)ctx;
 std::complex<float> localBuf [len / 2];
+std::complex<uint8_t> dumpBuf [len / 2];
 	if ((theStick == NULL) || (len != READLEN_DEFAULT))
 	   return;
 
 	for (uint32_t i = 0; i < len / 2; i ++) {
 	   localBuf [i] = std::complex<float> (convTable [buf [2 * i]],
 	                                       convTable [buf [2 * i + 1]]);
+	   dumpBuf [i] = std::complex<uint8_t> (buf [2 * i], buf [2 * i + 1]);
         }
 
+	if (theStick -> xml_dumping. load ())
+	   theStick -> xmlWriter -> add (dumpBuf, len / 2);
 	(void) theStick -> _I_Buffer -> putDataIntoBuffer (localBuf, len / 2);
 }
 //
@@ -90,6 +95,7 @@ void	controlThread (rtlsdrHandler *theStick) {
 //
 //	Our wrapper is a simple classs
 	rtlsdrHandler::rtlsdrHandler (RingBuffer<std::complex<float>> *b,
+	                              const std::string &recorderVersion,
 	                              int32_t	frequency,
 	                              int16_t	ppmCorrection,
 	                              int16_t	gain,
@@ -102,13 +108,13 @@ int16_t	i;
 
 	fprintf (stderr, "going for rtlsdr %d %d\n", frequency, gain);
 	_I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
 	this	-> frequency	= frequency;
 	this	-> ppmCorrection	= ppmCorrection;
 	this	-> theGain	= gain;
 	this	-> autogain	= autogain;
 	this	-> deviceIndex	= deviceIndex;
 
-	dumpIndex		= 0;
 	inputRate		= 2048000;
 	libraryLoaded		= false;
 	open			= false;
@@ -191,7 +197,7 @@ int16_t	i;
 	                              gains [theGain * gainsCount / 100] / 10,
 	                              gains [theGain * gainsCount / 100] % 10);
 	rtlsdr_set_tuner_gain (device, gains [theGain * gainsCount / 100]);
-
+	xml_dumping. store (false);
 }
 
 	rtlsdrHandler::~rtlsdrHandler	(void) {
@@ -200,8 +206,6 @@ int16_t	i;
 	   workerHandle. join ();
 	}
 
-	if (outFile != nullptr)
-	   fclose (outFile);
 	running	= false;
 	if (open)
 	   this -> rtlsdr_close (device);
@@ -397,5 +401,37 @@ void	rtlsdrHandler::resetBuffer (void) {
 
 int16_t	rtlsdrHandler::bitDepth	(void) {
 	return 8;
+}
+
+std::string	rtlsdrHandler::deviceName	() {
+	return "rtlsdr";
+}
+
+void	rtlsdrHandler::startDumping (const std::string & fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      8,
+	                                      "uint8",
+	                                      2048000,
+	                                      frequency,
+	                                      "rtlsdr",
+	                                      std::string (" "),
+	                                      recorderVersion);
+	xml_dumping. store (true);
+}
+
+void	rtlsdrHandler::stopDumping () {
+	if (!xml_dumping. load ())
+	   return;
+	if (xmlFile == nullptr)	// cannot happen
+	   return;
+	xml_dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
 }
 

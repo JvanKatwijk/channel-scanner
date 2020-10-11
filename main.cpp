@@ -340,6 +340,7 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	try {
 #ifdef	HAVE_SDRPLAY_V2
 	   theDevice	= new sdrplayHandler (&_I_Buffer,
+	                                      std::string ("2"),
 	                                      frequency,
 	                                      ppmOffset,
 	                                      GRdB,
@@ -349,23 +350,27 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	                                      0);
 #elif	HAVE_AIRSPY
 	   theDevice	= new airspyHandler (&_I_Buffer,
+	                                     std::string ("2"),
 	                                     frequency,
 	                                     ppmOffset,
 	                                     gain,
 	                                     rf_bias);
 #elif	HAVE_PLUTO
 	   theDevice	= new plutoHandler	(&_I_Buffer,
+	                                         std::string ("2"),
 	                                         frequency,
 	                                         gain,
 	                                         autogain);
 #elif	HAVE_RTLSDR
 	   theDevice	= new rtlsdrHandler	(&_I_Buffer,
+	                                         std::string ("2"),
 	                                         frequency,
 	                                         ppmOffset,
 	                                         gain,
 	                                         autogain);
 #elif   HAVE_HACKRF
            theDevice    = new hackrfHandler     (&_I_Buffer,
+	                                         std::string ("2"),
                                                  frequency,
                                                  ppmOffset,
                                                  lnaGain,
@@ -468,22 +473,16 @@ dabProcessor theRadio (_I_Buffer,
 	int avg_snr	= 0;
 	std::vector<int> tii_data;
 	if (dumping) {
-	   SF_INFO sf_info;
 	   time_t now;
            time (&now);
            char buf [sizeof "2020-09-06-08T06:07:09Z"];
            strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
            std::string timeString = buf;
-           std::string fileName = theChannel + " " +
+           std::string fileName = theDevice -> deviceName () +
+	                          theChannel + " " +
 	                          theDevice -> toHex (ensembleId) + " " +
-	                          timeString + ".sdr";
-
-	   sf_info. samplerate	= 2048000;
-           sf_info. channels	= 2;
-           sf_info. format	= SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-           dumpFile = sf_open (fileName. c_str(), SFM_WRITE, &sf_info);
-	   if (outFile != nullptr) 
-	      theRadio. startDumping (dumpFile, theDevice -> bitDepth ());
+	                          timeString + ".uff";
+	   theDevice -> startDumping (fileName);
 	}
 
 	run. store (true);
@@ -554,7 +553,7 @@ dabProcessor theRadio (_I_Buffer,
 
 	print_ensembleFooter (outFile, jsonOutput);
 	print_fileFooter (outFile, jsonOutput);
-	theRadio. stopDumping	();
+	theDevice ->  stopDumping	();
 	sf_close (dumpFile);
 	theRadio. stop		();
 	theDevice	-> stopReader	();

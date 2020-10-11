@@ -39,9 +39,10 @@ public:
 virtual			~deviceHandler 	(void);
 virtual		bool	restartReader	(int32_t);
 virtual		void	stopReader	(void);
-virtual		void	startDumping	(std::string, uint32_t);
+virtual		void	startDumping	(const std::string &);
 virtual		void	stopDumping	();
 virtual		int16_t	bitDepth	(void) { return 10;}
+virtual		std::string deviceName	();
 		std::string	toHex	(uint32_t);
 //
 protected:

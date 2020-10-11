@@ -39,8 +39,8 @@ bool	deviceHandler::restartReader	(int32_t) {
 void	deviceHandler::stopReader	(void) {
 }
 
-void	deviceHandler::startDumping	(std::string s, uint32_t id) {
-	(void)s; (void)id;
+void	deviceHandler::startDumping	(const std::string &s) {
+	(void)s;
 }
 
 void	deviceHandler::stopDumping	() {
@@ -49,6 +49,9 @@ void	deviceHandler::stopDumping	() {
 void	deviceHandler::run		(void) {
 }
 
+std::string	deviceHandler::deviceName () {
+	return "????";
+}
 
 std::string  deviceHandler::toHex (uint32_t ensembleId) {
 char t [4];

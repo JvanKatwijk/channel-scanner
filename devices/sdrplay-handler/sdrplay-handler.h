@@ -31,6 +31,8 @@
 #include	"device-handler.h"
 #include	"mirsdrapi-rsp.h"
 
+class	xml_fileWriter;
+
 #define	DUMP_SIZE	4096
 typedef void (*mir_sdr_StreamCallback_t)(int16_t	*xi,
 	                                 int16_t	*xq,
@@ -50,6 +52,7 @@ typedef	void	(*mir_sdr_GainChangeCallback_t)(uint32_t	gRdB,
 class	sdrplayHandler: public deviceHandler {
 public:
 		sdrplayHandler          (RingBuffer<std::complex<float>> *,
+	                                 const std::string &,
 	                                 int32_t        frequency,
 	                                 int16_t        ppmCorrection,
 	                                 int16_t	GRdB,
@@ -63,11 +66,18 @@ public:
 	bool	restartReader		(int32_t);
 	void	stopReader		(void);
 	int16_t	bitDepth		();
+        void		startDumping		(const std::string &);
+        void		stopDumping		();
+	std::string	deviceName		();
 //	need to be visible, since being accessed from 
 //	within the callback
 	RingBuffer<std::complex<float>>	*_I_Buffer;
 	float		denominator;
+        xml_fileWriter  *xmlWriter;
+        std::atomic<bool> dumping;
 private:
+	std::string	recorderVersion;
+	std::string	deviceModel;
 	int16_t		hwVersion;
 	int16_t		nrBits;
 	uint16_t	deviceIndex;
@@ -79,6 +89,8 @@ private:
 	int16_t		lnaState;
 	std::atomic<bool>	running;
 	mir_sdr_AgcControlT agcMode;
+
+        FILE            *xmlFile;
 };
 #endif
 

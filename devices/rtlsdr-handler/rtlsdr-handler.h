@@ -33,6 +33,7 @@
 #include	<stdio.h>
 
 class	dll_driver;
+class	xml_fileWriter;
 typedef	void *HINSTANCE;
 
 #define	DUMP_SIZE	4096
@@ -71,6 +72,7 @@ typedef	char *(* pfnrtlsdr_set_opt_string)(rtlsdr_dev_t *dev, const char *opts, 
 class	rtlsdrHandler: public deviceHandler {
 public:
 			rtlsdrHandler	(RingBuffer<std::complex<float>> *,
+	                                 const std::string &recorderVersion,
 	                                 int32_t	frequency,
 	                                 int16_t	ppmCorrection,
 	                                 int16_t	gain,
@@ -83,11 +85,16 @@ public:
 	void		stopReader	(void);
 	void		resetBuffer	(void);
 	int16_t		bitDepth	(void);
+	std::string	deviceName	();
+	void		startDumping	(const std::string &);
+	void		stopDumping	();
 //
 //	These need to be visible for the separate usb handling thread
 	RingBuffer<std::complex<float>>	*_I_Buffer;
 	pfnrtlsdr_read_async	rtlsdr_read_async;
 	struct rtlsdr_dev	*device;
+        xml_fileWriter  *xmlWriter;
+        std::atomic<bool> xml_dumping;
 private:
 	int32_t		inputRate;
 	uint16_t	deviceIndex;
@@ -101,6 +108,10 @@ private:
 	int16_t		gainsCount;
 	bool		running;
 	int		frequency;
+
+        std::string	recorderVersion;
+        FILE            *xmlFile;
+
 //	here we need to load functions from the dll
 	bool		load_rtlFunctions	(void);
 	pfnrtlsdr_get_index_by_serial	rtlsdr_get_index_by_serial;

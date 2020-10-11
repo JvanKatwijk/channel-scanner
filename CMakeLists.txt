@@ -341,6 +341,7 @@ endif ()
 	     ./service-printer.h
 	     ./dab_tables.h
 	     ./devices/device-handler.h
+	     ./devices/xml-filewriter.h
 	     ./dab-processor.h
 	     ./ofdm/phasereference.h
 	     ./ofdm/phasetable.h
@@ -368,6 +369,7 @@ endif ()
 	     ./service-printer.cpp
 	     ./dab_tables.cpp
 	     ./devices/device-handler.cpp
+	     ./devices/xml-filewriter.cpp
 	     ./dab-processor.cpp
 	     ./ofdm/ofdm-decoder.cpp
 	     ./ofdm/phasereference.cpp

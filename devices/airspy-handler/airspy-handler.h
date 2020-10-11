@@ -20,6 +20,7 @@
 #include	"ringbuffer.h"
 #include	"device-handler.h"
 #include	<complex>
+#include	<atomic>
 
 #ifdef  __MINGW32__
 #include        "windows.h"
@@ -36,6 +37,8 @@ typedef void    *HINSTANCE;
 #else
 #include	"airspy.h"
 #endif
+
+class	xml_fileWriter;
 
 extern "C"  {
 typedef	int (*pfn_airspy_init) (void);
@@ -88,6 +91,7 @@ typedef int (*pfn_airspy_set_sensitivity_gain)(struct airspy_device* device, uin
 class airspyHandler: public deviceHandler {
 public:
 			airspyHandler		(RingBuffer<std::complex<float>>*,
+	                                         const std::string &,
 	                                         int32_t, int16_t,
 	                                         int16_t, bool);
 			~airspyHandler		(void);
@@ -95,6 +99,9 @@ public:
 	void		stopReader		(void);
 	void		resetBuffer		(void);
 	int16_t		bitDepth		(void);
+	void		startDumping		(const std::string &);
+	void		stopDumping		();
+	std::string	deviceName		();
 private:
 	bool		load_airspyFunctions	(void);
 //	The functions to be extracted from the dll/.so file
@@ -123,6 +130,10 @@ private:
 	pfn_airspy_board_partid_serialno_read
 		                   my_airspy_board_partid_serialno_read;
 //
+	FILE		*xmlFile;
+	xml_fileWriter	*xmlWriter;
+	std::atomic<bool>	dumping;
+	std::string	recorderVersion;
 	int32_t		frequency;
 	int16_t		ppmCorrection;
 	int16_t		gain;

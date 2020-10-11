@@ -21,6 +21,7 @@
  */
 
 #include	"pluto-handler.h"
+#include	"xml-filewriter.h"
 #include	<unistd.h>
 #include	"ad9361.h"
 
@@ -159,11 +160,13 @@ std::complex<float> cmul (std::complex<float> x, float y) {
 }
 
 	plutoHandler::plutoHandler  (RingBuffer<std::complex<float>>*b,
+	                             const std::string	 &recorderVersion,
 	                             int32_t	frequency,
 	                             int	gainValue,
 	                             bool	agcMode):
 	                               deviceHandler (b) {
 	this	-> _I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
 	this	-> ctx			= nullptr;
 	this	-> rxbuf		= nullptr;
 	this	-> rx0_i		= nullptr;
@@ -272,7 +275,7 @@ std::complex<float> cmul (std::complex<float> x, float y) {
 	                                                 1.1 * 1540000 / 2,
 	                                                 1920000,
 	                                                 1536000);
-
+	dumping. store (false);
 	running. store (false);
 }
 
@@ -315,7 +318,7 @@ char	*p_end, *p_dat;
 int	p_inc;
 int	nbytes_rx;
 std::complex<float> localBuf [DAB_RATE / DIVIDER];
-
+std::complex<int16_t> dumpBuffer [CONV_SIZE + 1];
 	running. store (true);
 	while (running. load ()) {
 	   nbytes_rx	= iio_buffer_refill	(rxbuf);
@@ -328,8 +331,11 @@ std::complex<float> localBuf [DAB_RATE / DIVIDER];
 	      const int16_t q_p = ((int16_t *)p_dat) [1];
 	      std::complex<float>sample = std::complex<float> (i_p / 2048.0,
 	                                                       q_p / 2048.0);
+	      dumpBuffer [convIndex] = std::complex<int16_t> (i_p, q_p);
 	      convBuffer [convIndex ++] = sample;
 	      if (convIndex > CONV_SIZE) {
+	         if (dumping. load ())
+	            xmlWriter -> add (&dumpBuffer [1], CONV_SIZE);
 	         for (int j = 0; j < DAB_RATE / DIVIDER; j ++) {
 	            int16_t inpBase	= mapTable_int [j];
 	            float   inpRatio	= mapTable_float [j];
@@ -348,5 +354,35 @@ std::complex<float> localBuf [DAB_RATE / DIVIDER];
 }
 int16_t	plutoHandler::bitDepth		() {
 	return 12;
+}
+
+std::string	plutoHandler::deviceName	() {
+	return "pluto";
+}
+
+void	plutoHandler::startDumping	(const std::string &fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      12,
+	                                      "int16",
+	                                      RX_RATE,
+	                                      rx_cfg. lo_hz,
+	                                      "pluto",
+	                                      "adalm",
+	                                      recorderVersion);
+	dumping. store (true);
+}
+
+void	plutoHandler::stopDumping	() {
+	if (xmlFile == nullptr)	// this can happen !!
+	   return;
+	dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
 }
 

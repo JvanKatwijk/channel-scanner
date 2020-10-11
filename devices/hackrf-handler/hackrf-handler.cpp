@@ -23,10 +23,13 @@
  */
 
 #include	"hackrf-handler.h"
+#include	"xml-filewriter.h"
+#include	<unistd.h>
 
 #define	DEFAULT_GAIN	30
 
-	hackrfHandler::hackrfHandler  (RingBuffer<std::complex<float>> *b,
+	hackrfHandler::hackrfHandler  (RingBuffer<std::complex<float>> *b,	
+	                               const std::string & recorderVersion,
 	                               int32_t	frequency,
 	                               int16_t	ppm,
 	                               int16_t	lnaGain,
@@ -35,6 +38,7 @@
 	                                 deviceHandler (b) {
 int	res;
 	this	-> _I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
 	vfoFrequency			= frequency;
 	this	-> lnaGain		= lnaGain;
 	this	-> vgaGain		= vgaGain;
@@ -94,6 +98,7 @@ int	res;
            (void)hackrf_set_lna_gain (theDevice, lnaGain);
 	(void)hackrf_set_amp_enable (theDevice, ampEnable);
 
+	dumping. store (false);
 	running. store (false);
 }
 
@@ -145,6 +150,9 @@ RingBuffer<std::complex<float> > * q = ctx -> _I_Buffer;
 	   buffer [i]	= std::complex<float> (re, im);
 	}
 	q -> putDataIntoBuffer (buffer, transfer -> valid_length / 2);
+	if (ctx -> dumping. load ())
+	   ctx -> xmlWriter -> add ((std::complex<int8_t> *)p,
+	                                      transfer -> valid_length / 2);
 	return 0;
 }
 
@@ -201,5 +209,31 @@ void	hackrfHandler::resetBuffer	(void) {
 
 int16_t	hackrfHandler::bitDepth	(void) {
 	return 8;
+}
+
+void	hackrfHandler::startDumping	(const std::string &fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      8,
+	                                      "int8",
+	                                      2048000,
+	                                      vfoFrequency,
+	                                      "Hackrf",
+	                                      "--",
+	                                      recorderVersion);
+	dumping. store (true);
+}
+
+void	hackrfHandler::stopDumping	() {
+	if (xmlFile == nullptr)	// this can happen !!
+	   return;
+	dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
 }
 

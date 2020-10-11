@@ -22,6 +22,7 @@
  */
 
 #include	"lime-handler.h"
+#include	"xml-filewriter.h"
 #include	<unistd.h>
 
 #define	FIFO_SIZE	32768
@@ -30,13 +31,15 @@ float localBuffer [4 * FIFO_SIZE];
 lms_info_str_t limedevices [10];
 
 	limeHandler::limeHandler (RingBuffer<std::complex<float>> *b,
+	                          const std::string &recorderVersion,
 	                          int32_t frequency,
 	                          int16_t gain,
 	                          std::string antenna):
 	                             deviceHandler (b) {
-	this	-> _I_Buffer	= b;
-	this	-> frequency	= frequency;
-	this	-> gain		= gain;
+	this	-> _I_Buffer		= b;
+	this	-> recorderVersion	= recorderVersion;
+	this	-> frequency		= frequency;
+	this	-> gain			= gain;
 
 	int ndevs	= LMS_GetDeviceList (limedevices);
 	if (ndevs == 0) {	// no devices found
@@ -113,7 +116,7 @@ lms_info_str_t limedevices [10];
 	LMS_SetGaindB (theDevice, LMS_CH_RX, 0, gain);
 
 	LMS_Calibrate (theDevice, LMS_CH_RX, 0, 2500000.0, 0);
-	
+	dumping. store (false);
 	running. store (false);
 }
 
@@ -177,6 +180,8 @@ int	amountRead	= 0;
 	   res = LMS_RecvStream (&stream, localBuffer,
 	                                     FIFO_SIZE,  &meta, 1000);
 	   if (res > 0) {
+	      if (dumping. load ())
+	         xmlWriter -> add ((std::complex<int16_t> *)localBuffer, res);
 	      _I_Buffer -> putDataIntoBuffer (localBuffer, res);
 	      amountRead	+= res;
 	      res	= LMS_GetStreamStatus (&stream, &streamStatus);
@@ -186,4 +191,33 @@ int	amountRead	= 0;
 	(void)LMS_DestroyStream	(theDevice, &stream);
 }
 
+std::string	limeHandler::deviceName	() {
+	return "limeSDR";
+}
+
+void	limeHandler::startDumping	(const std::string &fileName) {
+        xmlFile	= fopen (fileName. c_str (), "w");
+	if (xmlFile == nullptr)
+	   return;
+	
+	xmlWriter	= new xml_fileWriter (xmlFile,
+	                                      12,
+	                                      "int16",
+	                                      2048000,
+	                                      frequency,
+	                                      "limesdr",
+	                                      "1",
+	                                      recorderVersion);
+	dumping. store (true);
+}
+
+void	limeHandler::stopDumping	() {
+	if (xmlFile == nullptr)	// this can happen !!
+	   return;
+	dumping. store (false);
+	usleep (1000);
+	xmlWriter	-> print_xmlHeader ();
+	delete xmlWriter;
+	fclose (xmlFile);
+}
 

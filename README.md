@@ -32,7 +32,7 @@ will scan the channels 12C, 11C, 5B, 5C and 8A, with the autogain set and
 
    a. the combined scandata will be written to the file /tmp/datafile.txt. The file is a text file, but can be read in with e.g. LibreOfficeCalc or similar programs
 
-   b. in case the channel contains detectable DAB data, raw data of the channel will be written to a file for "duration" SECONDS. The filename is a combination of the channel, the EID and the date, e.g.  "5B 8181 2020-09-15 10:43:04.sdr"
+   b. in case the channel contains detectable DAB data, raw data of the channel will be written to a file for "duration" SECONDS. The filename is a combination of the channel, the EID and the date, e.g.  "5B 8181 2020-09-15 10:43:04.uff"
 
 The basic parameters are
 
@@ -64,6 +64,20 @@ Example
 indicates that a file with raw data (in ".sdr" format) is written
 on the date as specified, where the input was from channel "12C",
 with the Ensemble Identification 0x8001.
+
+--------------------------------------------------------------------------
+Format of the dump file
+--------------------------------------------------------------------------
+
+The "dump" file is written as xml file, i.e. the format defined by Clemens Schmidt
+and myself in 2019. The idea is that the data is written the way it is 
+received from the input device. The xml format adds a precise description
+of the input format.
+The file extension chosen for the format here is ".uff" (uniserval file format).
+
+Both Qt-DAB and QiRX are perfectly able to handle this kind of files
+
+![fileformat](/uff-fileformat.png?raw=true)
 
 --------------------------------------------------------------------------
 Supported devices

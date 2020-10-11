@@ -30,7 +30,7 @@
 #include	"ringbuffer.h"
 #include	"device-handler.h"
 
-#define DUMP_SIZE       4096
+class	xml_fileWriter;
 
 #define	RX_RATE		2112000
 #define	DAB_RATE	2048000
@@ -48,6 +48,7 @@ struct stream_cfg {
 class	plutoHandler: public deviceHandler {
 public:
 			plutoHandler		(RingBuffer<std::complex<float>> *,
+	                                         const std::string &,
 	                                         int	frequency,
 	                                         int	gain,
 	                                         bool	agc);
@@ -55,8 +56,16 @@ public:
 	bool		restartReader		(int32_t);
 	void		stopReader		();
 	int16_t		bitDepth		();
+	void		startDumping		(const std::string &);
+	void		stopDumping		();
+	std::string	deviceName		();
 private:
 
+	std::string	recorderVersion;
+	std::string	deviceModel;
+	xml_fileWriter	*xmlWriter;
+	std::atomic<bool>	dumping;
+	FILE		*xmlFile;
 	std::thread		threadHandle;
 	void			run		();
 	int32_t			inputRate;
