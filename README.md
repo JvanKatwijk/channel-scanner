@@ -104,7 +104,7 @@ is using the cmake/make combination
 	cmake .. -DXXX=ON
 	make
 
-where XXX is ONE of RTLSDR, SDRPLAY_V2, PLUTO
+where XXX is ONE of RTLSDR, SDRPLAY_V2, PLUTO, HACKRF, AIRSPY or LIMESDR
 
 So, one generates an executable for a SINGLE device.
 
