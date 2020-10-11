@@ -4,14 +4,14 @@ dab-channelScanner
 -------------------------------------------------------------------------
 
 channelScanner is derived from the dab-cmdline scanner program.
-The channel-scanner is used to scan some channels, channels specified in
+The channelScanner is used to scan some channels, channels specified in
 the command line.
 
 The output is (can be) twofold:
 
-   a. a description of the content of the DAB data found in the scannel;
+   a. a **description** of the content of the DAB data found in the scannel;
 
-   b. a dump of a specified number of seconds of the raw input data.
+   b. a **dump** of a specified number of seconds of the raw input data in xml format.
 
 ![channel-scanner](/channel-scanner.png?raw=true)
 
@@ -32,7 +32,7 @@ will scan the channels 12C, 11C, 5B, 5C and 8A, with the autogain set and
 
    a. the combined scandata will be written to the file /tmp/datafile.txt. The file is a text file, but can be read in with e.g. LibreOfficeCalc or similar programs
 
-   b. in case the channel contains detectable DAB data, raw data of the channel will be written to a file for "duration" SECONDS. The filename is a combination of the channel, the EID and the date, e.g.  "5B 8181 2020-09-15 10:43:04.uff"
+   b. in case the channel contains detectable DAB data, raw data of the channel will be written to a file for "duration" SECONDS. The filename is a combination of the  device, the channel,  the EID and the date, e.g. "pluto12C 8001 2020-10-11 16:21:04.uff"
 
 The basic parameters are
 
