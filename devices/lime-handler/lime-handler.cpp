@@ -117,6 +117,7 @@ lms_info_str_t limedevices [10];
 
 	LMS_Calibrate (theDevice, LMS_CH_RX, 0, 2500000.0, 0);
 	dumping. store (false);
+	xmlFile		= nullptr;
 	running. store (false);
 }
 
@@ -157,6 +158,7 @@ void	limeHandler::stopReader		(void) {
 	if (!running. load ())
 	   return;
 	running. store (false);
+	stopDumping	();
 	usleep (500000);
 	threadHandle. join ();
 }
@@ -212,6 +214,8 @@ void	limeHandler::startDumping	(const std::string &fileName) {
 }
 
 void	limeHandler::stopDumping	() {
+	if (!dumping. load ())
+	   return;
 	if (xmlFile == nullptr)	// this can happen !!
 	   return;
 	dumping. store (false);
@@ -219,5 +223,6 @@ void	limeHandler::stopDumping	() {
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 

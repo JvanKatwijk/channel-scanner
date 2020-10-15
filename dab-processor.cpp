@@ -104,7 +104,7 @@ notSynced:
                  break;                 // yes, we are ready
 
               case NO_DIP_FOUND:
-                 if  (++ dip_attempts >= 5) {
+                 if  (++ dip_attempts >= 10) {
                     the_callBacks -> signalHandler (false, userData);
                     dip_attempts = 0;
                  }

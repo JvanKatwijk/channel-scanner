@@ -77,7 +77,7 @@ std::complex<uint8_t> dumpBuf [len / 2];
 	   dumpBuf [i] = std::complex<uint8_t> (buf [2 * i], buf [2 * i + 1]);
         }
 
-	if (theStick -> xml_dumping. load ())
+	if (theStick -> dumping. load ())
 	   theStick -> xmlWriter -> add (dumpBuf, len / 2);
 	(void) theStick -> _I_Buffer -> putDataIntoBuffer (localBuf, len / 2);
 }
@@ -119,8 +119,6 @@ int16_t	i;
 	libraryLoaded		= false;
 	open			= false;
 	gains			= NULL;
-	running			= false;
-
 #ifdef	__MINGW32__
 	const char *libraryString = "rtlsdr.dll";
 	Handle		= LoadLibrary ((wchar_t *)L"rtlsdr.dll");
@@ -197,11 +195,13 @@ int16_t	i;
 	                              gains [theGain * gainsCount / 100] / 10,
 	                              gains [theGain * gainsCount / 100] % 10);
 	rtlsdr_set_tuner_gain (device, gains [theGain * gainsCount / 100]);
-	xml_dumping. store (false);
+	dumping. store (false);
+	xmlFile		= nullptr;
+	running. store (false);
 }
 
 	rtlsdrHandler::~rtlsdrHandler	(void) {
-	if (running) { // we are running
+	if (running. load ()) { // we are running
 	   this -> rtlsdr_cancel_async (device);
 	   workerHandle. join ();
 	}
@@ -237,18 +237,19 @@ int32_t	r;
 	rtlsdr_set_tuner_gain (device, gains [theGain * gainsCount / 100]);
 	if (autogain)
 	   rtlsdr_set_agc_mode (device, 1);
-	running	= true;
+	running	. store (true);
 	return true;
 }
 
 
 void	rtlsdrHandler::stopReader	(void) {
-	if (!running)
+	if (!running. load ())
 	   return;
 
 	this -> rtlsdr_cancel_async (device);
 	workerHandle. join ();
-	running	= false;
+	stopDumping	();
+	running	. store (false);
 }
 //
 bool	rtlsdrHandler::load_rtlFunctions (void) {
@@ -420,18 +421,19 @@ void	rtlsdrHandler::startDumping (const std::string & fileName) {
 	                                      "rtlsdr",
 	                                      std::string (" "),
 	                                      recorderVersion);
-	xml_dumping. store (true);
+	dumping. store (true);
 }
 
 void	rtlsdrHandler::stopDumping () {
-	if (!xml_dumping. load ())
+	if (!dumping. load ())
 	   return;
 	if (xmlFile == nullptr)	// cannot happen
 	   return;
-	xml_dumping. store (false);
+	dumping. store (false);
 	usleep (1000);
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 

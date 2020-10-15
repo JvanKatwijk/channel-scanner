@@ -100,6 +100,7 @@ int	res;
 
 	dumping. store (false);
 	running. store (false);
+	xmlFile		= nullptr;
 }
 
 	hackrfHandler::~hackrfHandler	(void) {
@@ -200,6 +201,7 @@ int	res;
 	   fprintf (stderr, "%s \n", hackrf_error_name (hackrf_error (res)));
 	   return;
 	}
+	stopDumping ();
 	running. store (false);
 }
 
@@ -228,6 +230,8 @@ void	hackrfHandler::startDumping	(const std::string &fileName) {
 }
 
 void	hackrfHandler::stopDumping	() {
+	if (!dumping. load ())
+	   return;
 	if (xmlFile == nullptr)	// this can happen !!
 	   return;
 	dumping. store (false);
@@ -235,5 +239,6 @@ void	hackrfHandler::stopDumping	() {
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 

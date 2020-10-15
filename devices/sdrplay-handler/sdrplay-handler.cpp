@@ -120,7 +120,10 @@ int	maxlna;
                          mir_sdr_AGC_DISABLE, - GRdB, 0, 0, 0, 0, lnaState);
         if (!autoGain)
            mir_sdr_RSP_SetGr (GRdB, lnaState, 1, 0);
+	xmlFile		= nullptr;
 	dumping. store (false);
+	xmlFile		= nullptr;
+	running. store (false);
 }
 
 	sdrplayHandler::~sdrplayHandler	(void) {
@@ -210,6 +213,7 @@ void	sdrplayHandler::stopReader	(void) {
 	   return;
 
 	mir_sdr_StreamUninit	();
+	stopDumping	();
 	running. store (false);
 }
 
@@ -238,6 +242,8 @@ void	sdrplayHandler::startDumping	(const std::string &fileName) {
 }
 
 void	sdrplayHandler::stopDumping	() {
+	if (!dumping. load ())
+	   return;
 	if (xmlFile == nullptr)	// this can happen !!
 	   return;
 	dumping. store (false);
@@ -245,5 +251,6 @@ void	sdrplayHandler::stopDumping	() {
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 

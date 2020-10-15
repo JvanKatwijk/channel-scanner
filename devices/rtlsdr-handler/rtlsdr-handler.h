@@ -94,7 +94,7 @@ public:
 	pfnrtlsdr_read_async	rtlsdr_read_async;
 	struct rtlsdr_dev	*device;
         xml_fileWriter  *xmlWriter;
-        std::atomic<bool> xml_dumping;
+        std::atomic<bool> dumping;
 private:
 	int32_t		inputRate;
 	uint16_t	deviceIndex;
@@ -106,7 +106,7 @@ private:
 	bool		open;
 	int		*gains;
 	int16_t		gainsCount;
-	bool		running;
+	std::atomic<bool>	running;
 	int		frequency;
 
         std::string	recorderVersion;

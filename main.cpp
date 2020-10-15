@@ -143,7 +143,7 @@ const char	*deviceString	= "Compiled for Adalm Pluto";
 #elif	HAVE_SDRPLAY_V2
 int16_t		GRdB		= 30;
 int16_t		lnaState	= 4;
-bool		autogain	= true;
+bool		autogain	= false;
 int16_t		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for SDRPlay (2.13 library)";
 const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";

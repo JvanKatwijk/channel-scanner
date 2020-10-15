@@ -139,7 +139,7 @@ private:
 	int16_t		gain;
 	HINSTANCE	Handle;
 	bool		libraryLoaded;
-	bool		running;
+	std::atomic<bool>	running;
 const	char*		board_id_name (void);
 	int32_t		selectedRate;
 	std::complex<float>	*convBuffer;

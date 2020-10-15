@@ -54,7 +54,6 @@ uint32_t samplerate_count;
 //
 	device			= 0;
 	serialNumber		= 0;
-	_I_Buffer		= NULL;
 #ifdef	__MINGW32__
 	const char *libraryString = "airspy.dll";
 	Handle		= LoadLibrary ((wchar_t *)L"airspy.dll");
@@ -160,7 +159,8 @@ uint32_t samplerate_count;
 	convIndex		= 0;
 	convBuffer		= new std::complex<float> [convBufferSize + 1];
 	dumping. store (false);
-	running		= false;
+	running. store (false);
+	xmlFile		= nullptr;
 //
 //	Here we set the gain and frequency
 
@@ -187,7 +187,6 @@ uint32_t samplerate_count;
 	             my_airspy_error_name((airspy_error)result), result);
 	   }
 	}
-
 	my_airspy_exit ();
 	if (Handle != NULL) 
 #ifdef __MINGW32__
@@ -202,7 +201,7 @@ bool	airspyHandler::restartReader	(int32_t frequency) {
 int	result;
 int32_t	bufSize	= EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2;
 
-	if (running)
+	if (running. load ())
 	   return true;
 
 	_I_Buffer	-> FlushRingBuffer ();
@@ -235,7 +234,7 @@ int32_t	bufSize	= EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2;
 	buffer = new uint8_t [bufSize];
 	bs_ = bufSize;
 	bl_ = 0;
-	running	= true;
+	running	. store (true);
  	if (my_airspy_is_streaming (device) == AIRSPY_TRUE) 
 	   fprintf (stderr, "restarted\n");
 	
@@ -244,7 +243,7 @@ int32_t	bufSize	= EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2;
 
 void	airspyHandler::stopReader (void) {
 
-	if (!running)
+	if (!running. load ())
 	   return;
 int result = my_airspy_stop_rx (device);
 
@@ -255,7 +254,8 @@ int result = my_airspy_stop_rx (device);
 	   delete [] buffer;
 	   bs_ = bl_ = 0 ;
 	}
-	running	= false;
+	stopDumping ();
+	running. store (false);
 }
 //
 //	Directly copied from the airspy extio dll from Andrea Montefusco
@@ -384,6 +384,8 @@ void	airspyHandler::startDumping	(const std::string &fileName) {
 }
 
 void	airspyHandler::stopDumping	() {
+	if (!dumping. load ())
+	   return;
 	if (xmlFile == nullptr)	// this can happen !!
 	   return;
 	dumping. store (false);
@@ -391,6 +393,7 @@ void	airspyHandler::stopDumping	() {
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 
 //

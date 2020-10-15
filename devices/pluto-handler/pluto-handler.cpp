@@ -276,6 +276,7 @@ std::complex<float> cmul (std::complex<float> x, float y) {
 	                                                 1920000,
 	                                                 1536000);
 	dumping. store (false);
+	xmlFile		= nullptr;
 	running. store (false);
 }
 
@@ -309,6 +310,7 @@ void	plutoHandler::stopReader() {
 	if (!running. load())
 	   return;
 	running. store (false);
+	stopDumping	();
 	usleep (50000);
 	threadHandle. join ();
 }
@@ -377,6 +379,8 @@ void	plutoHandler::startDumping	(const std::string &fileName) {
 }
 
 void	plutoHandler::stopDumping	() {
+	if (!dumping. load ())
+	   return;
 	if (xmlFile == nullptr)	// this can happen !!
 	   return;
 	dumping. store (false);
@@ -384,5 +388,6 @@ void	plutoHandler::stopDumping	() {
 	xmlWriter	-> print_xmlHeader ();
 	delete xmlWriter;
 	fclose (xmlFile);
+	xmlFile		= nullptr;
 }
 
