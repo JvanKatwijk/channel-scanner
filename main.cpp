@@ -22,6 +22,7 @@
  */
 
 #include	<unistd.h>
+#include	<stdlib.h>
 #include	<signal.h>
 #include	<getopt.h>
 #include        <cstdio>
@@ -91,6 +92,7 @@ void    ensembleHandler (std::string name, int Id, void *userData) {
         ensembleId      = Id;
 }
 
+std::string homeDir	= getenv ("HOME");
 std::vector<std::string> programNames;
 std::vector<int> programSIds;
 
@@ -138,7 +140,7 @@ int		duration	= 10;		// seconds, default
 #ifdef	HAVE_PLUTO
 int16_t		gain		= 60;
 bool		autogain	= false;
-const char	*optionsString	= "RT:F:D:d:M:B:C:G:Q";
+const char	*optionsString	= "O:RT:F:D:d:M:B:C:G:Q";
 const char	*deviceString	= "Compiled for Adalm Pluto";
 #elif	HAVE_SDRPLAY_V2
 int16_t		GRdB		= 30;
@@ -146,31 +148,31 @@ int16_t		lnaState	= 4;
 bool		autogain	= false;
 int16_t		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for SDRPlay (2.13 library)";
-const char	*optionsString	= "RF:T:D:d:M:B:C:G:L:Qp:";
+const char	*optionsString	= "O:RF:T:D:d:M:B:C:G:L:Qp:";
 #elif	HAVE_AIRSPY
 int16_t		gain		= 20;
 bool		autogain	= false;
 bool		rf_bias		= false;
 int16_t		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for AIRspy";
-const char	*optionsString	= "RT:F:D:d:M:B:C:G:p:";
+const char	*optionsString	= "O:RT:F:D:d:M:B:C:G:p:";
 #elif	HAVE_RTLSDR
 int16_t		gain		= 20;
 bool		autogain	= false;
 int16_t		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for rtlsdr sticks";
-const char	*optionsString	= "F:T:D:d:M:B:C:G:p:QR";
+const char	*optionsString	= "O:F:T:D:d:M:B:C:G:p:QR";
 #elif	HAVE_HACKRF
 int		lnaGain		= 40;
 int		vgaGain		= 40;
 int		ppmOffset	= 0;
 const char	*deviceString	= "Compiled for hackrf";
-const char	*optionsString	= "F:T:D:d:A:C:G:g:p:R:";
+const char	*optionsString	= "O:F:T:D:d:A:C:G:g:p:R:";
 #elif	HAVE_LIMESDR
 int16_t		gain		= 70;
 std::string	antenna		= "Auto";
 const char	*deviceString	= "Compiled for limesdr";
-const char	*optionsString	= "F:T:RD:d:A:C:G:g:X:";
+const char	*optionsString	= "O:F:T:RD:d:A:C:G:g:X:";
 #endif
 bool		dumping		= false;
 int16_t		timeSyncTime	= 10;
@@ -210,6 +212,10 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	            fprintf (stderr, "cannot open %s\n", optarg);
 	            exit (1);
 	         }
+	         break;
+
+	      case 'O':
+	         homeDir	= optarg;
 	         break;
 
 	      case 'D':
@@ -377,7 +383,9 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
                                                  vgaGain);
 #elif   HAVE_LIME
            theDevice    = new limeHandler       (&_I_Buffer,
-                                                 frequency, gain, antenna);
+	                                         std::string ("2"),
+                                                 frequency,
+	                                         gain, antenna);
 #endif
 
 	}
@@ -390,6 +398,8 @@ RingBuffer<std::complex<float>> _I_Buffer (16 * 32768);
 	   exit (33);
 	}
 //
+	if (homeDir.back () != '/')
+	   homeDir = homeDir + "/";
 	for (uint16_t i = 0; i < channelList. size (); i ++) {
 	   std::string theChannel = channelList. at (i);
 	   handleChannel (theDevice,
@@ -478,10 +488,12 @@ dabProcessor theRadio (_I_Buffer,
            char buf [sizeof "2020-09-06-08T06:07:09Z"];
            strftime (buf, sizeof (buf), "%F %T", gmtime (&now));
            std::string timeString = buf;
-           std::string fileName = theDevice -> deviceName () +
+           std::string fileName = homeDir +
+	                          theDevice -> deviceName () +
 	                          theChannel + " " +
 	                          theDevice -> toHex (ensembleId) + " " +
 	                          timeString + ".uff";
+	   fprintf (stderr, "fileName = %s\n", fileName. c_str ());
 	   theDevice -> startDumping (fileName);
 	}
 

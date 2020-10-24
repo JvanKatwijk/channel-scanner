@@ -43,6 +43,7 @@ The basic parameters are
 	e. -F filename for selecting an output file, default stdout
 	f. -R, when used, the per channel input is dumped into a file
 	g. -T xx, duration (in seconds), default 10
+	h. -O pathname, path to store the uff files. default the homedirectory
 
 The -d xx flag sets the maximum waiting time in seconds for deciding whether or not time syncing can be achieved;
 The -D xx flag sets the maximum waiting time in seconds  for the identification of an ensemble;
